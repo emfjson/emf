@@ -10,11 +10,11 @@ The following repository holds the maven artefacts for EMF-GWT:
 ```
 <repository>
   <id>emfgwt-repository</id>
-  <url>https://raw.github.com/ghillairet/maven-repository/master/</url>
-  <snapshots>
-  	<enabled>true</enabled>
-  	<updatePolicy>always</updatePolicy>
-  </snapshots>
+	<url>https://raw.github.com/ghillairet/maven-repository/master/snapshot</url>
+	<snapshots>
+			<enabled>true</enabled>
+			<updatePolicy>always</updatePolicy>
+	</snapshots>
 </repository>
 ```
 
