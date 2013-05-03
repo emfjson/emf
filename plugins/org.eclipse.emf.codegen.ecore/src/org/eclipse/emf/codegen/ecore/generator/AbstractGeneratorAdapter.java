@@ -1022,7 +1022,45 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
       }
       else
       {
-        return name + ": " + value;
+        StringBuilder result = new StringBuilder(name);
+        result.append(": ");
+        int index = 0;
+        boolean previous = false;
+        int length = value.length();
+        for (int i = value.indexOf(','); i != -1; index = i + 1, i = value.indexOf(',', index))
+        {
+          if (previous)
+          {
+            result.append(',');
+            result.append(lineDelimiter);
+            result.append(' ');
+          }
+          else
+          {
+            previous = true;
+          }
+
+          if (i + 1 < length && Character.isDigit(value.charAt(i + 1)))
+          {
+            // The comma is immediately followed by a digit so is probably the comma in a range.
+            // So buffer out this substring and when we get to the next substring, don't start a new line.
+            //
+            result.append(value.substring(index, i + 1));
+            previous = false;
+          }
+          else
+          {
+            result.append(value.substring(index, i));
+          }
+        }
+        if (previous)
+        {
+          result.append(',');
+          result.append(lineDelimiter);
+          result.append(' ');
+        }
+        result.append(value.substring(index));
+        return result.toString();
       }
     }
 
@@ -1297,10 +1335,6 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
       {
         AttributeData newAttribute = newAttributes.get(index);
 
-        // Mark the attribute so it's not pushed in later.
-        //
-        newAttribute.value = null;
-
         // Pull in the contents for these specific attributes if the are merging translated attributes...
         //
         if ("Bundle-Name".equals(oldAttribute.name) || "Bundle-Vendor".equals(oldAttribute.name))
@@ -1396,9 +1430,15 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
           {
             // Pull in just the new value if there is no structured content.
             //
-            oldAttribute.value = newAttribute.value;
+            // oldAttribute.value = newAttribute.value;
+            // 
+            // In stand alone mode, it's safer not to overwrite the content.
           }
         }
+
+        // Mark the attribute so it's not pushed in later.
+        //
+        newAttribute.value = null;
       }
     }
 
@@ -1511,7 +1551,7 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
       String emitterResult = CodeGenUtil.unicodeEscapeEncode(jetEmitter.generate(createMonitor(monitor, 1), arguments, getLineDelimiter()));
       byte[] bytes = emitterResult.toString().getBytes(PROPERTIES_ENCODING);
 
-      if (exists(targetFile))
+      if (shouldMerge(targetFile) && exists(targetFile))
       {
         // Merge with an existing file.
         //
@@ -1675,6 +1715,19 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
   }
 
   /**
+   * Whether {@link #generateJava(String, String, String, JETEmitter, Object[], Monitor) generateJava) or
+   * {@link #generateProperties(String, JETEmitter, Object[], Monitor) generateProperties}
+   * should merge the newly generated contents with the existing contents 
+   * or should simply overwrite the old contents.
+   * This implementation always returns true.
+   * @since 2.9
+   */
+  protected boolean shouldMerge(URI workspacePath)
+  {
+    return true;
+  }
+
+  /**
    * Generates a Java source file using JET, with {@link org.eclipse.emf.codegen.util.ImportManager import management}
    * and, when running under Eclipse, {@link org.eclipse.emf.codegen.merge.java.JMerger merging} and
    * {@link org.eclipse.jdt.core.formatter.CodeFormatter code formatting} capabilities.
@@ -1739,7 +1792,7 @@ public abstract class AbstractGeneratorAdapter extends SingletonAdapterImpl impl
       createImportManager(packageName, className);
       String targetFileContents = null;
       String targetFileEncoding = getEncoding(targetFile);
-      if (exists(targetFile) && jMerger != null)
+      if (shouldMerge(targetFile) && exists(targetFile) && jMerger != null)
       {
         // Prime the import manager with the existing imports of the target.
         //
