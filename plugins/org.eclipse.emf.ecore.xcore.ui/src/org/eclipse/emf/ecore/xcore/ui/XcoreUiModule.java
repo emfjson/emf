@@ -8,6 +8,7 @@
 package org.eclipse.emf.ecore.xcore.ui;
 
 
+import org.eclipse.emf.ecore.xcore.formatting.XcoreFormatterPreferenceValuesProvider;
 import org.eclipse.emf.ecore.xcore.interpreter.IClassLoaderProvider;
 import org.eclipse.emf.ecore.xcore.ui.builder.XcoreBuildParticipant;
 import org.eclipse.emf.ecore.xcore.ui.builder.XcoreFileSystemAccess;
@@ -15,6 +16,7 @@ import org.eclipse.emf.ecore.xcore.ui.builder.XcoreWorkingCopyOwnerProvider;
 import org.eclipse.emf.ecore.xcore.ui.container.XcoreJavaProjectsState;
 import org.eclipse.emf.ecore.xcore.ui.contentassist.ImportingTypesProposalProvider;
 import org.eclipse.emf.ecore.xcore.ui.contentassist.XcoreVariableCompletions;
+import org.eclipse.emf.ecore.xcore.ui.formatting.XcoreFormatterFactory;
 import org.eclipse.emf.ecore.xcore.ui.hover.XcoreHoverDocumentationProvider;
 import org.eclipse.emf.ecore.xcore.ui.hover.XcoreHoverProvider;
 import org.eclipse.emf.ecore.xcore.ui.hover.XcoreHoverSignatureProvider;
@@ -23,7 +25,7 @@ import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreDependentElementsCalculat
 import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreJavaElementFinder;
 import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreReferenceFinder;
 import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreRenameElementProcessor;
-import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreRenameRefactoringProcessorFactory;
+import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreRenameRefactoringParticipantProcessor;
 import org.eclipse.emf.ecore.xcore.ui.refactoring.XcoreRenameStrategy;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.xtext.builder.EclipseResourceFileSystemAccess2;
@@ -31,11 +33,13 @@ import org.eclipse.xtext.builder.IXtextBuilderParticipant;
 import org.eclipse.xtext.common.types.access.jdt.IJavaProjectProvider;
 import org.eclipse.xtext.common.types.access.jdt.IWorkingCopyOwnerProvider;
 import org.eclipse.xtext.common.types.ui.refactoring.JdtRenameRefactoringProcessorFactory;
+import org.eclipse.xtext.common.types.ui.refactoring.participant.JdtRenameParticipant.ContextFactory;
 import org.eclipse.xtext.common.types.util.jdt.IJavaElementFinder;
 import org.eclipse.xtext.common.types.xtext.ui.ITypesProposalProvider;
 import org.eclipse.xtext.common.types.xtext.ui.JdtVariableCompletions;
 import org.eclipse.xtext.resource.containers.IAllContainersState;
 import org.eclipse.xtext.ui.editor.findrefs.IReferenceFinder;
+import org.eclipse.xtext.ui.editor.formatting.IContentFormatterFactory;
 import org.eclipse.xtext.ui.editor.hover.IEObjectHover;
 import org.eclipse.xtext.ui.editor.hover.IEObjectHoverProvider;
 import org.eclipse.xtext.ui.editor.hover.html.IEObjectHoverDocumentationProvider;
@@ -43,8 +47,10 @@ import org.eclipse.xtext.ui.editor.hyperlinking.IHyperlinkHelper;
 import org.eclipse.xtext.ui.refactoring.IDependentElementsCalculator;
 import org.eclipse.xtext.ui.refactoring.IRenameStrategy;
 import org.eclipse.xtext.ui.refactoring.impl.RenameElementProcessor;
+import org.eclipse.xtext.xbase.formatting.IFormattingPreferenceValuesProvider;
 import org.eclipse.xtext.xbase.ui.hover.XbaseDeclarativeHoverSignatureProvider;
 import org.eclipse.xtext.xbase.ui.hover.XbaseDispatchingEObjectTextHover;
+import org.eclipse.xtext.xbase.ui.jvmmodel.refactoring.jdt.JdtRenameRefactoringParticipantProcessor;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -145,18 +151,18 @@ public class XcoreUiModule extends AbstractXcoreUiModule
 
   public Class<? extends JdtRenameRefactoringProcessorFactory> bindJdtRenameRefactoringProcessorFactory()
   {
-    return XcoreRenameRefactoringProcessorFactory.class;
+    return JdtRenameRefactoringProcessorFactory.class;
   }
 
   @Override
-  public  Provider<IAllContainersState> provideIAllContainersState()
+  public Provider<IAllContainersState> provideIAllContainersState()
   {
-   return 
+   return
      new Provider<IAllContainersState>()
      {
        @Inject
        XcoreJavaProjectsState instance;
-   
+
        public IAllContainersState get()
        {
          return instance;
@@ -173,5 +179,27 @@ public class XcoreUiModule extends AbstractXcoreUiModule
   public Class<? extends IWorkingCopyOwnerProvider> bindIWorkingCopyOwnerProvider()
   {
     return XcoreWorkingCopyOwnerProvider.class;
+  }
+
+  @Override
+  public Class<? extends IContentFormatterFactory> bindIContentFormatterFactory()
+  {
+    return XcoreFormatterFactory.class;
+  }
+
+  public Class<? extends IFormattingPreferenceValuesProvider> bindIFormattingPreferenceValuesProvider()
+  {
+    return XcoreFormatterPreferenceValuesProvider.class;
+  }
+
+  public Class<? extends JdtRenameRefactoringParticipantProcessor> bindJdtRenameRefactoringParticipantProcessor()
+  {
+    return XcoreRenameRefactoringParticipantProcessor.class;
+  }
+
+  @Override
+  public Class<? extends ContextFactory> bindJdtRenameParticipant$ContextFactory()
+  {
+    return ContextFactory.class;
   }
 }

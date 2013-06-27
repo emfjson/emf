@@ -340,7 +340,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		//
 		//	   * / / *
 		//
-		//	   * In scope for create should be what's visible in XyzFactoryImpl 
+		//	   * In scope for create should be what's visible in XyzFactoryImpl
 		//
 		//	   * and 'this' will denote an instance of the wrapped type.
 		//
@@ -359,7 +359,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		//
 		//	   * / / *
 		//
-		//	   * In scope for create should be what's visible in XyzFactoryImpl 
+		//	   * In scope for create should be what's visible in XyzFactoryImpl
 		//
 		//	   * and 'this' will denote an instance of the wrapped type.
 		//
@@ -427,7 +427,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		//
 		//	   * / / *
 		//
-		//	   * In scope for create should be what's visible in XyzFactoryImpl 
+		//	   * In scope for create should be what's visible in XyzFactoryImpl
 		//
 		//	   * and 'this' will denote an instance of the wrapped type.
 		//
@@ -547,14 +547,14 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		private final Group cGroup_3 = (Group)cGroup.eContents().get(3);
 		private final Keyword cEqualsSignKeyword_3_0 = (Keyword)cGroup_3.eContents().get(0);
 		private final Assignment cValueAssignment_3_1 = (Assignment)cGroup_3.eContents().get(1);
-		private final RuleCall cValueINTTerminalRuleCall_3_1_0 = (RuleCall)cValueAssignment_3_1.eContents().get(0);
+		private final RuleCall cValueSignedIntParserRuleCall_3_1_0 = (RuleCall)cValueAssignment_3_1.eContents().get(0);
 		
 		//XEnumLiteral:
 		//
-		//	annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=INT)?;
+		//	annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=SignedInt)?;
 		public ParserRule getRule() { return rule; }
 
-		//annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=INT)?
+		//annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=SignedInt)?
 		public Group getGroup() { return cGroup; }
 
 		//annotations+=XAnnotation*
@@ -581,17 +581,38 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		//STRING
 		public RuleCall getLiteralSTRINGTerminalRuleCall_2_1_0() { return cLiteralSTRINGTerminalRuleCall_2_1_0; }
 
-		//("=" value=INT)?
+		//("=" value=SignedInt)?
 		public Group getGroup_3() { return cGroup_3; }
 
 		//"="
 		public Keyword getEqualsSignKeyword_3_0() { return cEqualsSignKeyword_3_0; }
 
-		//value=INT
+		//value=SignedInt
 		public Assignment getValueAssignment_3_1() { return cValueAssignment_3_1; }
 
+		//SignedInt
+		public RuleCall getValueSignedIntParserRuleCall_3_1_0() { return cValueSignedIntParserRuleCall_3_1_0; }
+	}
+
+	public class SignedIntElements extends AbstractParserRuleElementFinder {
+		private final ParserRule rule = (ParserRule) GrammarUtil.findRuleForName(getGrammar(), "SignedInt");
+		private final Group cGroup = (Group)rule.eContents().get(1);
+		private final Keyword cHyphenMinusKeyword_0 = (Keyword)cGroup.eContents().get(0);
+		private final RuleCall cINTTerminalRuleCall_1 = (RuleCall)cGroup.eContents().get(1);
+		
+		//SignedInt returns EInt:
+		//
+		//	"-"? INT;
+		public ParserRule getRule() { return rule; }
+
+		//"-"? INT
+		public Group getGroup() { return cGroup; }
+
+		//"-"?
+		public Keyword getHyphenMinusKeyword_0() { return cHyphenMinusKeyword_0; }
+
 		//INT
-		public RuleCall getValueINTTerminalRuleCall_3_1_0() { return cValueINTTerminalRuleCall_3_1_0; }
+		public RuleCall getINTTerminalRuleCall_1() { return cINTTerminalRuleCall_1; }
 	}
 
 	public class XClassElements extends AbstractParserRuleElementFinder {
@@ -2324,6 +2345,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	private XDataTypeElements pXDataType;
 	private XEnumElements pXEnum;
 	private XEnumLiteralElements pXEnumLiteral;
+	private SignedIntElements pSignedInt;
 	private XClassElements pXClass;
 	private XMemberElements pXMember;
 	private XAttributeElements pXAttribute;
@@ -2461,7 +2483,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	//
 	//	   * / / *
 	//
-	//	   * In scope for create should be what's visible in XyzFactoryImpl 
+	//	   * In scope for create should be what's visible in XyzFactoryImpl
 	//
 	//	   * and 'this' will denote an instance of the wrapped type.
 	//
@@ -2489,13 +2511,24 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 
 	//XEnumLiteral:
 	//
-	//	annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=INT)?;
+	//	annotations+=XAnnotation* name=ID ("as" literal=STRING)? ("=" value=SignedInt)?;
 	public XEnumLiteralElements getXEnumLiteralAccess() {
 		return (pXEnumLiteral != null) ? pXEnumLiteral : (pXEnumLiteral = new XEnumLiteralElements());
 	}
 	
 	public ParserRule getXEnumLiteralRule() {
 		return getXEnumLiteralAccess().getRule();
+	}
+
+	//SignedInt returns EInt:
+	//
+	//	"-"? INT;
+	public SignedIntElements getSignedIntAccess() {
+		return (pSignedInt != null) ? pSignedInt : (pSignedInt = new SignedIntElements());
+	}
+	
+	public ParserRule getSignedIntRule() {
+		return getSignedIntAccess().getRule();
 	}
 
 	//XClass:
@@ -2751,11 +2784,9 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 
 	//XAssignment returns XExpression:
 	//
-	//	{XAssignment} / * (declaringType=[types::JvmDeclaredType] '::')? * /
+	//	{XAssignment} feature=[types::JvmIdentifiableElement|FeatureCallID] OpSingleAssign value=XAssignment | XOrExpression
 	//
-	//	feature=[types::JvmIdentifiableElement|FeatureCallID] OpSingleAssign value=XAssignment | XOrExpression (=>
-	//
-	//	({XBinaryOperation.leftOperand=current} feature=[types::JvmIdentifiableElement|OpMultiAssign])
+	//	(=> ({XBinaryOperation.leftOperand=current} feature=[types::JvmIdentifiableElement|OpMultiAssign])
 	//
 	//	rightOperand=XAssignment)?;
 	public XbaseGrammarAccess.XAssignmentElements getXAssignmentAccess() {
@@ -2993,11 +3024,13 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 
 	//XMemberFeatureCall returns XExpression:
 	//
-	//	XPrimaryExpression (=> ({XAssignment.assignable=current} "." feature=[types::JvmIdentifiableElement|FeatureCallID]
+	//	XPrimaryExpression (=> ({XAssignment.assignable=current} ("." | explicitStatic?="::")
 	//
-	//	OpSingleAssign) value=XAssignment | => ({XMemberFeatureCall.memberCallTarget=current} ("." | nullSafe?="?." |
+	//	feature=[types::JvmIdentifiableElement|FeatureCallID] OpSingleAssign) value=XAssignment | =>
 	//
-	//	spreading?="*.")) ("<" typeArguments+=JvmArgumentTypeReference ("," typeArguments+=JvmArgumentTypeReference)* ">")?
+	//	({XMemberFeatureCall.memberCallTarget=current} ("." | nullSafe?="?." | explicitStatic?="::")) ("<"
+	//
+	//	typeArguments+=JvmArgumentTypeReference ("," typeArguments+=JvmArgumentTypeReference)* ">")?
 	//
 	//	feature=[types::JvmIdentifiableElement|FeatureCallID] (=> explicitOperationCall?="("
 	//
@@ -3237,13 +3270,11 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 
 	//XFeatureCall returns XExpression:
 	//
-	//	{XFeatureCall} declaringType=[types::JvmDeclaredType|StaticQualifier]? ("<" typeArguments+=JvmArgumentTypeReference
+	//	{XFeatureCall} ("<" typeArguments+=JvmArgumentTypeReference ("," typeArguments+=JvmArgumentTypeReference)* ">")?
 	//
-	//	("," typeArguments+=JvmArgumentTypeReference)* ">")? feature=[types::JvmIdentifiableElement|IdOrSuper] (=>
+	//	feature=[types::JvmIdentifiableElement|IdOrSuper] (=> explicitOperationCall?="(" (featureCallArguments+=XShortClosure
 	//
-	//	explicitOperationCall?="(" (featureCallArguments+=XShortClosure | featureCallArguments+=XExpression (","
-	//
-	//	featureCallArguments+=XExpression)*)? ")")? featureCallArguments+=XClosure?;
+	//	| featureCallArguments+=XExpression ("," featureCallArguments+=XExpression)*)? ")")? featureCallArguments+=XClosure?;
 	public XbaseGrammarAccess.XFeatureCallElements getXFeatureCallAccess() {
 		return gaXbase.getXFeatureCallAccess();
 	}
@@ -3261,23 +3292,6 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	
 	public ParserRule getIdOrSuperRule() {
 		return getIdOrSuperAccess().getRule();
-	}
-
-	//// This is a workaround since ANTLR will not be able to resolve
-	//
-	//// StaticQualifier: ValidID ('::' ValidID)*; and XFeatureCall: (StaticQualifier '::')? ValidID
-	//
-	//// Make sure to change the value converter if you change the syntax of the StaticQualifier
-	//
-	//StaticQualifier:
-	//
-	//	(ValidID "::")+;
-	public XbaseGrammarAccess.StaticQualifierElements getStaticQualifierAccess() {
-		return gaXbase.getStaticQualifierAccess();
-	}
-	
-	public ParserRule getStaticQualifierRule() {
-		return getStaticQualifierAccess().getRule();
 	}
 
 	//XConstructorCall returns XExpression:

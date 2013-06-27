@@ -24,6 +24,9 @@ import org.eclipse.xtext.generator.IGenerator
 import org.eclipse.xtext.xbase.compiler.XbaseCompiler
 
 import java.util.Collections
+import java.util.HashSet
+import org.eclipse.xtext.common.types.JvmFormalParameter
+import org.eclipse.xtext.common.types.JvmTypeReference
 
 class XcoreGenerator implements IGenerator {
 
@@ -42,7 +45,7 @@ class XcoreGenerator implements IGenerator {
 		for (xClassifier : pack.classifiers) {
 			if (xClassifier instanceof XDataType) {
 				val xDataType = xClassifier as XDataType;
-				val eDataType = xDataType.mapping.eDataType
+				val eDataType = xDataType.mapping.EDataType
 				val createBody = xDataType.createBody
 				val creator = xDataType.mapping.creator
 				if (createBody != null && creator != null) {
@@ -63,7 +66,7 @@ class XcoreGenerator implements IGenerator {
 			else {
 				val xClass = xClassifier as XClass;
 				val eClass = xClass.mapping.EClass;
-				for (eStructuralFeature : eClass.eAllStructuralFeatures) {
+				for (eStructuralFeature : eClass.EAllStructuralFeatures) {
 					if (processed.add(eStructuralFeature)) {
 						val xFeature = mappings.getXFeature(eStructuralFeature);
 						if (xFeature != null) {
@@ -71,13 +74,12 @@ class XcoreGenerator implements IGenerator {
 							if (getBody != null) {
 								val getter = mappings.getMapping(xFeature).getter
 								val appendable = createAppendable
-								appendable.declareVariable(getter.declaringType, "this")
 								compiler.compile(getBody, appendable, getter.returnType, Collections::emptySet)
 								EcoreUtil::setAnnotation(eStructuralFeature, GenModelPackage::eNS_URI, "get", extractBody(appendable.toString)) }
 						}
 					}
 				}
-				for (eOperation : eClass.eAllOperations) {
+				for (eOperation : eClass.EAllOperations) {
 					if (processed.add(eOperation)) {
 						val xOperation = mappings.getXOperation(eOperation);
 						if (xOperation != null) {
@@ -86,8 +88,10 @@ class XcoreGenerator implements IGenerator {
 								val jvmOperation = mappings.getMapping(xOperation).jvmOperation
 								if (jvmOperation != null) {
 									val appendable = createAppendable
-									appendable.declareVariable(jvmOperation, "this")
-									compiler.compile(body, appendable, jvmOperation.returnType, Collections::emptySet)
+									for (JvmFormalParameter parameter : jvmOperation.parameters) {
+										appendable.declareVariable(parameter, parameter.getName())
+									}
+									compiler.compile(body, appendable, jvmOperation.returnType, new HashSet<JvmTypeReference>(jvmOperation.exceptions))
 									EcoreUtil::setAnnotation(eOperation, GenModelPackage::eNS_URI, "body", extractBody(appendable.toString))
 								}
 							}
