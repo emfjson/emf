@@ -7,13 +7,16 @@
  */
 package org.eclipse.emf.edit.ui.provider;
 
+import org.eclipse.emf.common.ui.viewer.IStyledLabelDecorator;
 import org.eclipse.emf.common.ui.viewer.IUndecoratingLabelProvider;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.IColorProvider;
 import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
@@ -26,6 +29,43 @@ import org.eclipse.swt.graphics.Point;
  */
 public class DecoratingColumLabelProvider extends ColumnLabelProvider implements IUndecoratingLabelProvider
 {
+  
+  /**
+   * An extended version of the decorating column label provider that also provides for styled string.
+   * 
+   * @author <a href="mailto:mikael.barbero@obeo.fr">Mikael Barbero</a>
+   * @since 2.10
+   */
+  public static class StyledLabelProvider extends DecoratingColumLabelProvider implements IStyledLabelProvider
+  {
+    public StyledLabelProvider(ILabelProvider labelProvider, ILabelDecorator labelDecorator)
+    {
+      super(labelProvider, labelDecorator);
+    }
+
+    public StyledString getStyledText(Object element)
+    {
+      if (labelDecorator instanceof IStyledLabelDecorator)
+      {
+        StyledString styledString;
+        if (labelProvider instanceof IStyledLabelProvider)
+        {
+          styledString = ((IStyledLabelProvider) labelProvider).getStyledText(element);
+        }
+        else
+        {
+          styledString = new StyledString(getText(element));
+        }
+        
+        return ((IStyledLabelDecorator)labelDecorator).decorateStyledText(styledString, element);
+      }
+      else
+      {
+        return new StyledString(labelDecorator.decorateText(labelProvider.getText(element), element));
+      }
+    }
+  }
+
   protected ILabelProvider labelProvider;
   protected IFontProvider fontProvider;
   protected IColorProvider colorProvider;
@@ -136,19 +176,19 @@ public class DecoratingColumLabelProvider extends ColumnLabelProvider implements
   @Override
   public int getToolTipTimeDisplayed(Object object)
   {
-    return cellLabelProvider == null ? null : cellLabelProvider.getToolTipTimeDisplayed(object);
+    return cellLabelProvider == null ? 0 : cellLabelProvider.getToolTipTimeDisplayed(object);
   }
 
   @Override
   public int getToolTipDisplayDelayTime(Object object)
   {
-    return cellLabelProvider == null ? null : cellLabelProvider.getToolTipDisplayDelayTime(object);
+    return cellLabelProvider == null ? 0 : cellLabelProvider.getToolTipDisplayDelayTime(object);
   }
 
   @Override
   public int getToolTipStyle(Object object)
   {
-    return cellLabelProvider == null ? null : cellLabelProvider.getToolTipStyle(object);
+    return cellLabelProvider == null ? 0 : cellLabelProvider.getToolTipStyle(object);
   }
 
   @Override
