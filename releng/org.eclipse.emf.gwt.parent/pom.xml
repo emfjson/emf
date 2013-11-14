@@ -32,17 +32,6 @@
 			<version>${gwtVersion}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.google.appengine</groupId>
-			<artifactId>appengine</artifactId>
-			<version>${appEngineVersion}</version>
-			<type>pom</type>
-		</dependency>
-		<dependency>
-			<groupId>com.google.appengine</groupId>
-			<artifactId>appengine-api-1.0-sdk</artifactId>
-			<version>${appEngineVersion}</version>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -108,16 +97,5 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-	<distributionManagement>
-		<repository>
-			<id>github-release</id>
-			<url>file://${repository.directory}/release</url>
-		</repository>
-		<snapshotRepository>
-			<id>github-snapshot</id>
-			<url>file://${repository.directory}/snapshot</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 </project>
