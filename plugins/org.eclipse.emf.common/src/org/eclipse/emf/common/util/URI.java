@@ -826,6 +826,11 @@ public abstract class URI
       protected int segmentCount;
 
       /**
+       * The number of segments populated with strings during intern that need to be nulled during reset.
+       */
+      protected int usedSegmentCount;
+
+      /**
        * The boundaries of the path segments.
        */
       protected int[] segmentBoundaries = new int[100];
@@ -1065,20 +1070,26 @@ public abstract class URI
           offset = end + 1;
         }
 
+        // The number of segments populated and needing to be reset to null.
+        //
+        usedSegmentCount = segmentCount + 1;
+
         // Create a hierarchical platform-scheme URI from the interned segments.
         //
-        return new Hierarchical(this.hashCode, true, SCHEME_PLATFORM, null, null, true, internArray(segments, 0, segmentCount + 1, hashCode), null);
+        return new Hierarchical(this.hashCode, true, SCHEME_PLATFORM, null, null, true, internArray(segments, 0, usedSegmentCount, hashCode), null);
       }
 
       @Override
       public void reset(boolean isExclusive)
       {
-        for (int i = 1; i <= segmentCount; ++i)
+        for (int i = 0; i < usedSegmentCount; ++i)
         {
           segments[i] = null;
         }
         segmentCount = 0;
+        usedSegmentCount = 0;
         encodedPath = null;
+        base = null;
         path = null;
 
         super.reset(isExclusive);
@@ -1151,6 +1162,11 @@ public abstract class URI
        * The number of segments in the path.
        */
       protected int segmentCount;
+
+      /**
+       * The number of segments populated with strings during intern that need to be nulled during reset.
+       */
+      protected int usedSegmentCount;
 
       /**
        * The boundaries of the segments in the path.
@@ -1558,6 +1574,10 @@ public abstract class URI
           offset = end + 1;
         }
 
+        // Remember which segments need to be cleared in reset.
+        //
+        usedSegmentCount = segmentCount;
+
         // Intern the segments array itself.
         //
         String[] internedSegments = internArray(segments, 0, segmentCount, segmentsHashCode);
@@ -1578,10 +1598,11 @@ public abstract class URI
       @Override
       public void reset(boolean isExclusive)
       {
-        for (int i = 1; i <= segmentCount; ++i)
+        for (int i = 0; i < usedSegmentCount; ++i)
         {
           segments[i] = null;
         }
+        usedSegmentCount = 0;
         segmentCount = 0;
         encodedPath = null;
         path = null;
@@ -2554,19 +2575,24 @@ public abstract class URI
    * Static factory method based on parsing a {@link java.io.File} path
    * string.  The <code>pathName</code> is converted into an appropriate
    * form, as follows: platform specific path separators are converted to
-   * <code>/<code>; the path is encoded; and a "file" scheme and, if missing,
+   * <code>/</code>; the path is encoded; and a "file" scheme, if the path is {@link File#isAbsolute() absolute}, and, if missing,
    * a leading <code>/</code>, are added to an absolute path.  The result
-   * is then parsed using {@link #createURI(String) createURI}.
+   * is then parsed the same as if using {@link #createURI(String) createURI}.
    *
    * <p>The encoding step escapes all spaces, <code>#</code> characters, and
    * other characters disallowed in URIs, as well as <code>?</code>, which
    * would delimit a path from a query.  Decoding is automatically performed
    * by {@link #toFileString toFileString}, and can be applied to the values
-   * returned by other accessors by via the static {@link #decode(String)
+   * returned by other accessors via the static {@link #decode(String)
    * decode} method.
    *
    * <p>A relative path with a specified device (something like
    * <code>C:myfile.txt</code>) cannot be expressed as a valid URI.
+   * An absolute URI, i.e., one with <code>file:</code> will only be returned if the <code>pathName</code> itself is {@link File#isAbsolute() absolute}.
+   * In other words, a relative path will yield a {@link #isRelative() relative} URI,
+   * and in particular on Windows, a path is absolute only if the device is specified, 
+   * e.g., <code>C:/myfile.text</code> is absolute but <code>/myfile.text</code> is relative on Windows though absolute on Unix-style file systems.
+   * 
    *
    * @exception java.lang.IllegalArgumentException if <code>pathName</code>
    * specifies a device and a relative path, or if any component of the path
