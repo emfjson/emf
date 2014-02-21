@@ -1075,10 +1075,10 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 		//	{XReference} annotations+=XAnnotation* (containment?="contains" resolveProxies?="resolving"? |
 		//	resolveProxies?="resolving" containment?="contains" | container?="container" resolveProxies?="resolving"? |
 		//	resolveProxies?="resolving" container?="container" | "refers" local?="local"? | local?="local" "refers")
-		//	(unordered?="unordered"? & unique?="unique"? & readonly?="readonly"? & transient?="transient"? & volatile?="volatile"?
-		//	& unsettable?="unsettable"? & derived?="derived"?) type=XGenericType multiplicity=XMultiplicity? name=ID ("opposite"
-		//	opposite=[genmodel::GenFeature|ValidID])? ("keys" keys+=[genmodel::GenFeature|ValidID] (","
-		//	keys+=[genmodel::GenFeature|ValidID])*)? / *
+		//	(unordered?="unordered"? & unique?="unique"? & readonly?="readonly"? & transient?="transient"? &
+		//	volatile?="volatile"? & unsettable?="unsettable"? & derived?="derived"?) type=XGenericType
+		//	multiplicity=XMultiplicity? name=ID ("opposite" opposite=[genmodel::GenFeature|ValidID])? ("keys"
+		//	keys+=[genmodel::GenFeature|ValidID] ("," keys+=[genmodel::GenFeature|ValidID])*)? / *
 		//	 * In scope for getBody should be what's visible in AbcImpl
 		//	 * and 'this' will denote an instance of the feature's type.
 		//	 * The block expression must yield a value of the feature's type.
@@ -2431,10 +2431,10 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	//	{XReference} annotations+=XAnnotation* (containment?="contains" resolveProxies?="resolving"? |
 	//	resolveProxies?="resolving" containment?="contains" | container?="container" resolveProxies?="resolving"? |
 	//	resolveProxies?="resolving" container?="container" | "refers" local?="local"? | local?="local" "refers")
-	//	(unordered?="unordered"? & unique?="unique"? & readonly?="readonly"? & transient?="transient"? & volatile?="volatile"?
-	//	& unsettable?="unsettable"? & derived?="derived"?) type=XGenericType multiplicity=XMultiplicity? name=ID ("opposite"
-	//	opposite=[genmodel::GenFeature|ValidID])? ("keys" keys+=[genmodel::GenFeature|ValidID] (","
-	//	keys+=[genmodel::GenFeature|ValidID])*)? / *
+	//	(unordered?="unordered"? & unique?="unique"? & readonly?="readonly"? & transient?="transient"? &
+	//	volatile?="volatile"? & unsettable?="unsettable"? & derived?="derived"?) type=XGenericType
+	//	multiplicity=XMultiplicity? name=ID ("opposite" opposite=[genmodel::GenFeature|ValidID])? ("keys"
+	//	keys+=[genmodel::GenFeature|ValidID] ("," keys+=[genmodel::GenFeature|ValidID])*)? / *
 	//	 * In scope for getBody should be what's visible in AbcImpl
 	//	 * and 'this' will denote an instance of the feature's type.
 	//	 * The block expression must yield a value of the feature's type.
@@ -2806,8 +2806,8 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	//	({XMemberFeatureCall.memberCallTarget=current} ("." | nullSafe?="?." | explicitStatic?="::")) ("<"
 	//	typeArguments+=JvmArgumentTypeReference ("," typeArguments+=JvmArgumentTypeReference)* ">")?
 	//	feature=[types::JvmIdentifiableElement|FeatureCallID] (=> explicitOperationCall?="("
-	//	(memberCallArguments+=XShortClosure | memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)? ")")?
-	//	memberCallArguments+=XClosure?)*;
+	//	(memberCallArguments+=XShortClosure | memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)?
+	//	")")? memberCallArguments+=XClosure?)*;
 	public XbaseGrammarAccess.XMemberFeatureCallElements getXMemberFeatureCallAccess() {
 		return gaXbase.getXMemberFeatureCallAccess();
 	}
@@ -2817,9 +2817,9 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//XPrimaryExpression returns XExpression:
-	//	XConstructorCall | XBlockExpression | XSwitchExpression | XFeatureCall | XLiteral | XIfExpression | XForLoopExpression
-	//	| XWhileExpression | XDoWhileExpression | XThrowExpression | XReturnExpression | XTryCatchFinallyExpression |
-	//	XParenthesizedExpression;
+	//	XConstructorCall | XBlockExpression | XSwitchExpression | XFeatureCall | XLiteral | XIfExpression |
+	//	XForLoopExpression | XBasicForLoopExpression | XWhileExpression | XDoWhileExpression | XThrowExpression |
+	//	XReturnExpression | XTryCatchFinallyExpression | XParenthesizedExpression;
 	public XbaseGrammarAccess.XPrimaryExpressionElements getXPrimaryExpressionAccess() {
 		return gaXbase.getXPrimaryExpressionAccess();
 	}
@@ -2921,8 +2921,9 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//XSwitchExpression returns XExpression:
-	//	{XSwitchExpression} "switch" (=> (localVarName=ValidID ":")? switch=XExpression | => ("(" localVarName=ValidID ":")
-	//	switch=XExpression ")") "{" cases+=XCasePart+ ("default" ":" default=XExpression)? "}";
+	//	{XSwitchExpression} "switch" (=> ("(" declaredParam=JvmFormalParameter ":") switch=XExpression ")" | =>
+	//	(declaredParam=JvmFormalParameter ":")? switch=XExpression) "{" cases+=XCasePart* ("default" ":"
+	//	default=XExpression)? "}";
 	public XbaseGrammarAccess.XSwitchExpressionElements getXSwitchExpressionAccess() {
 		return gaXbase.getXSwitchExpressionAccess();
 	}
@@ -2932,7 +2933,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//XCasePart:
-	//	typeGuard=JvmTypeReference? ("case" case=XExpression)? ":" then=XExpression;
+	//	{XCasePart} typeGuard=JvmTypeReference? ("case" case=XExpression)? (":" then=XExpression | ",");
 	public XbaseGrammarAccess.XCasePartElements getXCasePartAccess() {
 		return gaXbase.getXCasePartAccess();
 	}
@@ -2942,7 +2943,7 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//XForLoopExpression returns XExpression:
-	//	{XForLoopExpression} "for" "(" declaredParam=JvmFormalParameter ":" forExpression=XExpression ")"
+	//	=> ({XForLoopExpression} "for" "(" declaredParam=JvmFormalParameter ":") forExpression=XExpression ")"
 	//	eachExpression=XExpression;
 	public XbaseGrammarAccess.XForLoopExpressionElements getXForLoopExpressionAccess() {
 		return gaXbase.getXForLoopExpressionAccess();
@@ -2950,6 +2951,18 @@ public class XcoreGrammarAccess extends AbstractGrammarElementFinder {
 	
 	public ParserRule getXForLoopExpressionRule() {
 		return getXForLoopExpressionAccess().getRule();
+	}
+
+	//XBasicForLoopExpression returns XExpression:
+	//	{XBasicForLoopExpression} "for" "(" (initExpressions+=XVariableDeclaration | initExpressions+=XExpression (","
+	//	initExpressions+=XExpression)*)? ";" expression=XExpression? ";" (updateExpressions+=XExpression (","
+	//	updateExpressions+=XExpression)*)? ")" eachExpression=XExpression;
+	public XbaseGrammarAccess.XBasicForLoopExpressionElements getXBasicForLoopExpressionAccess() {
+		return gaXbase.getXBasicForLoopExpressionAccess();
+	}
+	
+	public ParserRule getXBasicForLoopExpressionRule() {
+		return getXBasicForLoopExpressionAccess().getRule();
 	}
 
 	//XWhileExpression returns XExpression:
