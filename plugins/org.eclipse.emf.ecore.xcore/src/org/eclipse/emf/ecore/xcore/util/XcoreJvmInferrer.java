@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.emf.codegen.ecore.genmodel.GenBase;
 import org.eclipse.emf.codegen.ecore.genmodel.GenClass;
@@ -40,11 +41,19 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.ETypeParameter;
 import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.util.EcoreValidator;
 import org.eclipse.emf.ecore.xcore.XDataType;
 import org.eclipse.emf.ecore.xcore.XNamedElement;
+import org.eclipse.emf.ecore.xcore.XOperation;
+import org.eclipse.emf.ecore.xcore.XStructuralFeature;
+import org.eclipse.emf.ecore.xcore.XcorePlugin;
 import org.eclipse.emf.ecore.xcore.mappings.ToXcoreMapping;
+import org.eclipse.emf.ecore.xcore.mappings.XClassMapping;
+import org.eclipse.emf.ecore.xcore.mappings.XDataTypeMapping;
+import org.eclipse.emf.ecore.xcore.mappings.XFeatureMapping;
+import org.eclipse.emf.ecore.xcore.mappings.XOperationMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XcoreMapper;
 import org.eclipse.emf.ecore.xcore.scoping.LazyCreationProxyURIConverter;
 import org.eclipse.xtext.common.types.JvmConstructor;
@@ -69,15 +78,18 @@ import org.eclipse.xtext.common.types.JvmVisibility;
 import org.eclipse.xtext.common.types.JvmWildcardTypeReference;
 import org.eclipse.xtext.common.types.TypesFactory;
 import org.eclipse.xtext.common.types.TypesPackage;
-import org.eclipse.xtext.common.types.util.TypeReferences;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.xbase.XBlockExpression;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
-
+@Singleton
 public class XcoreJvmInferrer
 {
   public static List<JvmIdentifiableElement> getInferredElements(GenBase genBase)
@@ -92,25 +104,6 @@ public class XcoreJvmInferrer
       }
     }
     return result;
-  }
-
-  public static <T extends JvmIdentifiableElement> T getInferredElement(GenBase genBase, String qualifiedName)
-  {
-    Adapter adapter = EcoreUtil.getAdapter(genBase.eAdapters(), InferenceAdapter.class);
-    if (adapter != null)
-    {
-      for (JvmElementInferrer<?> jvmElementInferrer : ((InferenceAdapter)adapter).jvmElementInferrers)
-      {
-        JvmIdentifiableElement jvmIdentifiableElement = jvmElementInferrer.getInferredElement();
-        if (qualifiedName.equals(jvmIdentifiableElement.getQualifiedName()))
-        {
-          @SuppressWarnings("unchecked")
-          T result = (T)jvmIdentifiableElement;
-          return result;
-        }
-      }
-    }
-    return null;
   }
 
   public static void inferName(GenBase genBase)
@@ -205,7 +198,7 @@ public class XcoreJvmInferrer
   }
 
   @Inject
-  private LazyCreationProxyURIConverter proxyUriConverter;
+  private LazyCreationProxyURIConverter proxyURIConverter;
 
   @Inject
   private IQualifiedNameConverter nameConverter;
@@ -214,7 +207,7 @@ public class XcoreJvmInferrer
   private XcoreMapper mapper;
 
   @Inject
-  TypeReferences typeReferences;
+  private IResourceScopeCache cache;
 
   public List<? extends JvmDeclaredType> inferElements(GenModel genModel)
   {
@@ -236,6 +229,8 @@ public class XcoreJvmInferrer
         inferDeepStructure(genClassifier);
       }
     }
+
+    cache.clear(genModel.eResource());
   }
 
   protected void inferDeepStructure(GenBase genBase)
@@ -245,8 +240,15 @@ public class XcoreJvmInferrer
     {
       for (JvmElementInferrer<?> jvmElementInferrer : Lists.newArrayList(((InferenceAdapter)adapter).jvmElementInferrers))
       {
-        jvmElementInferrer.inferDeepStructure();
-        jvmElementInferrer.resolveTypeParameterReferences();
+        try
+        {
+          jvmElementInferrer.inferDeepStructure();
+          jvmElementInferrer.resolveTypeParameterReferences();
+        }
+        catch (Throwable throwable)
+        {
+          XcorePlugin.INSTANCE.log(throwable);
+        }
       }
     }
   }
@@ -297,6 +299,10 @@ public class XcoreJvmInferrer
           {
             final JvmTypeParameter typeParameter = TypesFactory.eINSTANCE.createJvmTypeParameter();
             typeParameter.setName("T");
+            final JvmUpperBound upperBound = TypesFactory.eINSTANCE.createJvmUpperBound();
+            JvmTypeReference objectReference = getJvmTypeReference("java.lang.Object", genPackage);
+            upperBound.setTypeReference(objectReference);
+            typeParameter.getConstraints().add(upperBound);
             inferredElement.getTypeParameters().add(typeParameter);
 
             JvmParameterizedTypeReference typeParameterReference = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
@@ -308,6 +314,49 @@ public class XcoreJvmInferrer
             inferredElement.getSuperTypes().add(switchTypeReference);
 
             EList<JvmMember> members = inferredElement.getMembers();
+
+            members.add(createJvmField(genPackage, JvmVisibility.PROTECTED, true, false, "modelPackage", getJvmTypeReference(genPackage.getReflectionPackageName() + "." + genPackage.getPackageInterfaceName(), genPackage)));
+
+            {
+              JvmElementInferrer<JvmConstructor> constructorInferrer =
+                new JvmElementInferrer<JvmConstructor>(X_LOW)
+                {
+                  @Override
+                  protected JvmConstructor inferStructure()
+                  {
+                    JvmConstructor jvmConstructor = TypesFactory.eINSTANCE.createJvmConstructor();
+                    jvmConstructor.setVisibility(JvmVisibility.PUBLIC); 
+                    return jvmConstructor;
+                  }
+     
+                  @Override
+                  public void inferName()
+                  {
+                    inferredElement.setSimpleName(genPackage.getSwitchClassName());
+                  }
+                };
+              associate(genPackage, constructorInferrer);
+              members.add(constructorInferrer.getInferredElement());
+            }
+
+            {
+              JvmOperation isSwitchFor = createJvmOperation(genPackage, JvmVisibility.PROTECTED, false, "isSwitchFor", getJvmTypeReference("boolean", genPackage));
+              JvmFormalParameter ePackage = createJvmFormalParameter(genPackage, "ePackage", getJvmTypeReference("org.eclipse.emf.ecore.EPackage", genPackage));
+              isSwitchFor.getParameters().add(ePackage);
+              members.add(isSwitchFor);
+            }
+
+            {
+              JvmParameterizedTypeReference doSwitchResult = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
+              doSwitchResult.setType(typeParameter);
+              JvmOperation doSwitch = createJvmOperation(genPackage, JvmVisibility.PROTECTED, false, "doSwitch", doSwitchResult);
+              JvmFormalParameter classifierID = createJvmFormalParameter(genPackage, "ePackage", getJvmTypeReference("org.eclipse.emf.ecore.EPackage", genPackage));
+              doSwitch.getParameters().add(classifierID);
+              JvmFormalParameter theEObject = createJvmFormalParameter(genPackage, "theEObject", getJvmTypeReference("org.eclipse.emf.ecore.EObject", genPackage));
+              doSwitch.getParameters().add(theEObject);
+              members.add(doSwitch);
+            }
+
             for (final GenClass genClass : genPackage.getAllSwitchGenClasses())
             {
               if (!genClass.isAbstract())
@@ -1038,8 +1087,9 @@ public class XcoreJvmInferrer
               {
                if (isDataTypeConverters || isImplementation)
                 {
-                  XDataType xDataType = mapper.getXDataType(genClassifier);
+                  final XDataType xDataType = mapper.getXDataType(genClassifier);
                   final XBlockExpression createBody = xDataType.getCreateBody();
+                  final XDataTypeMapping mapping = mapper.getMapping(xDataType);
                   if (createBody != null || isDataTypeConverters)
                   {
                     JvmElementInferrer<JvmOperation> createMethodInferrer =
@@ -1051,6 +1101,7 @@ public class XcoreJvmInferrer
                           JvmOperation jvmOperation = createJvmOperation(genPackage,JvmVisibility.PUBLIC, false, getJvmTypeReference(genDataType.getImportedParameterizedInstanceClassName(), genDataType));
                           JvmFormalParameter jvmFormalParameter = createJvmFormalParameter(genPackage, createBody == null ? "literal" : "it", getJvmTypeReference("java.lang.String", genPackage));
                           jvmOperation.getParameters().add(jvmFormalParameter);
+                          mapping.setCreator(jvmOperation);
                           return jvmOperation;
                         }
 
@@ -1099,6 +1150,8 @@ public class XcoreJvmInferrer
                           JvmOperation jvmOperation = createJvmOperation(genPackage,JvmVisibility.PUBLIC, false, getJvmTypeReference("java.lang.String", genPackage));
                           JvmFormalParameter jvmFormalParameter = createJvmFormalParameter(genPackage, convertBody == null ? "instanceValue" : "it", getJvmTypeReference(genDataType.getImportedBoundedWildcardInstanceClassName(), genDataType));
                           jvmOperation.getParameters().add(jvmFormalParameter);
+                          XDataTypeMapping mapping = mapper.getMapping(xDataType);
+                          mapping.setConverter(jvmOperation);
                           return jvmOperation;
                         }
 
@@ -1612,7 +1665,25 @@ public class XcoreJvmInferrer
             jvmEnumerationType.setFinal(true);
             jvmEnumerationType.setVisibility(JvmVisibility.PUBLIC);
             final EList<JvmMember> members = jvmEnumerationType.getMembers();
- 
+
+            {
+              JvmParameterizedTypeReference componentType = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
+              componentType.setType(jvmEnumerationType);
+              JvmGenericArrayTypeReference arrayTypeReference = TypesFactory.eINSTANCE.createJvmGenericArrayTypeReference();
+              arrayTypeReference.setComponentType(componentType);
+              JvmOperation values = createJvmOperation(genEnum, JvmVisibility.PUBLIC, true, "values", arrayTypeReference);
+              members.add(values);
+            }
+
+            {
+              JvmParameterizedTypeReference returnType = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
+              returnType.setType(jvmEnumerationType);
+              JvmOperation valueOf = createJvmOperation(genEnum, JvmVisibility.PUBLIC, true, "valueOf", returnType);
+              JvmFormalParameter param = createJvmFormalParameter(genEnum, "name", getJvmTypeReference("java.lang.String", genEnum));
+              valueOf.getParameters().add(param);
+              members.add(valueOf);
+            }
+
             for (final GenEnumLiteral genEnumLiteral : genEnum.getGenEnumLiterals())
             {
               JvmElementInferrer<JvmEnumerationLiteral> enumLiteralInferrer =
@@ -1640,18 +1711,13 @@ public class XcoreJvmInferrer
               associate(genEnumLiteral, enumLiteralInferrer);
               members.add(enumLiteralInferrer.getInferredElement());
  
-              JvmElementInferrer<JvmEnumerationLiteral> enumLiteralValueInferrer =
-                new JvmElementInferrer<JvmEnumerationLiteral>(X_VERY_HIGH)
+              JvmElementInferrer<JvmField> enumLiteralValueInferrer =
+                new JvmElementInferrer<JvmField>(X_VERY_HIGH)
                 {
                   @Override
-                  protected JvmEnumerationLiteral inferStructure()
+                  protected JvmField inferStructure()
                   {
-                    JvmEnumerationLiteral enumLiteralValue = TypesFactory.eINSTANCE.createJvmEnumerationLiteral();
-                    enumLiteralValue.setStatic(true);
-                    enumLiteralValue.setFinal(true);
-                    enumLiteralValue.setVisibility(JvmVisibility.PUBLIC);
-                    enumLiteralValue.setType(getJvmTypeReference("int", genEnumLiteral));
-                    return enumLiteralValue;
+                    return createJvmField(genEnumLiteral, JvmVisibility.PUBLIC, true, true, getJvmTypeReference("int", genEnumLiteral));
                   }
  
                   @Override
@@ -1692,11 +1758,11 @@ public class XcoreJvmInferrer
  
             for (final GenEnumLiteral genEnumLiteral : genEnum.getGenEnumLiterals())
             {
-              JvmElementInferrer<JvmEnumerationLiteral> enumLiteralValueInferrer =
-                new JvmElementInferrer<JvmEnumerationLiteral>(X_VERY_HIGH)
+              JvmElementInferrer<JvmField> enumLiteralValueInferrer =
+                new JvmElementInferrer<JvmField>(X_VERY_HIGH)
                 {
                   @Override
-                  protected JvmEnumerationLiteral inferStructure()
+                  protected JvmField inferStructure()
                   {
                     JvmElementInferrer<JvmField> enumLiteralInferrer =
                       new JvmElementInferrer<JvmField>(X_VERY_HIGH)
@@ -1718,12 +1784,7 @@ public class XcoreJvmInferrer
                     associate(genEnumLiteral, enumLiteralInferrer);
                     members.add(enumLiteralInferrer.getInferredElement());
  
-                    JvmEnumerationLiteral enumLiteralValue = TypesFactory.eINSTANCE.createJvmEnumerationLiteral();
-                    enumLiteralValue.setStatic(true);
-                    enumLiteralValue.setFinal(true);
-                    enumLiteralValue.setVisibility(JvmVisibility.PUBLIC);
-                    enumLiteralValue.setType(getJvmTypeReference("int", genEnumLiteral));
-                    return enumLiteralValue;
+                    return createJvmField(genEnumLiteral, JvmVisibility.PUBLIC, true, true, getJvmTypeReference("int", genEnumLiteral));
                   }
  
                   @Override
@@ -1782,6 +1843,17 @@ public class XcoreJvmInferrer
           JvmGenericType modelClass = TypesFactory.eINSTANCE.createJvmGenericType();
           modelClass.setInterface(!isImplementation);
           modelClass.setVisibility(JvmVisibility.PUBLIC);
+
+          XClassMapping mapping = mapper.getMapping(mapper.getXClass(genClass));
+          if (isInterface)
+          {
+            mapping.setInterfaceType(modelClass);
+          }
+          if (isImplementation)
+          {
+            mapping.setInterfaceType(modelClass);
+          }
+
           return modelClass;
         }
 
@@ -2278,6 +2350,8 @@ public class XcoreJvmInferrer
       // public void set<%=genFeature.getAccessorName()%>(int index, <%=genFeature.getListItemType(genClass)%> element)
     }
 
+    XStructuralFeature xStructuralFeature = mapper.getXFeature(genFeature);
+    final XFeatureMapping mapping = mapper.getMapping(xStructuralFeature);
     if (genFeature.isGet() && (isImplementation || !genFeature.isSuppressedGetVisibility()))
     {
       JvmElementInferrer<JvmOperation> getAccessorInferrer =
@@ -2287,6 +2361,10 @@ public class XcoreJvmInferrer
           protected JvmOperation inferStructure()
           {
             JvmOperation jvmOperation = createJvmOperation(genFeature, JvmVisibility.PUBLIC, false,  getJvmTypeReference(genFeature.getType(genFeature.getGenClass()), genFeature));
+            if (isInterface)
+            {
+              mapping.setGetter(jvmOperation);
+            }
             return jvmOperation;
           }
 
@@ -2392,6 +2470,10 @@ public class XcoreJvmInferrer
               associate(genFeature, valueParameterInferrefer);
             }
             jvmOperation.getParameters().add(valueParameterInferrefer.getInferredElement());
+            if (isInterface)
+            {
+              mapping.setSetter(jvmOperation);
+            }
             return jvmOperation;
           }
 
@@ -2438,6 +2520,10 @@ public class XcoreJvmInferrer
           protected JvmOperation inferStructure()
           {
             JvmOperation jvmOperation = createJvmOperation(genFeature, JvmVisibility.PUBLIC, false,  getJvmTypeReference("void", genFeature));
+            if (isInterface)
+            {
+              mapping.setUnsetter(jvmOperation);
+            }
             return jvmOperation;
           }
 
@@ -2460,6 +2546,10 @@ public class XcoreJvmInferrer
           protected JvmOperation inferStructure()
           {
             JvmOperation jvmOperation = createJvmOperation(genFeature, JvmVisibility.PUBLIC, false, getJvmTypeReference("boolean", genFeature));
+            if (isInterface)
+            {
+              mapping.setIsSetter(jvmOperation);
+            }
             return jvmOperation;
           }
 
@@ -2476,9 +2566,10 @@ public class XcoreJvmInferrer
     return result;
   }
 
-  protected JvmOperation getJvmOperation(final GenClass genClass, final GenOperation genOperation, boolean isInterface, boolean isImplementation)
+  protected JvmOperation getJvmOperation(final GenClass genClass, final GenOperation genOperation, final boolean isInterface, boolean isImplementation)
   {
-    if (isImplementation) {
+    if (isImplementation) 
+    {
       if (genOperation.isInvariant() && genOperation.hasInvariantExpression())
       {
         // protected static final <%=genModel.getImportedName("java.lang.String")%> <%=CodeGenUtil.upperName(genClass.getUniqueName(genOperation), genModel.getLocale())%>__EEXPRESSION
@@ -2505,6 +2596,12 @@ public class XcoreJvmInferrer
           for (EGenericType eGenericException : genOperation.getEcoreOperation().getEGenericExceptions())
           {
             exceptions.add(getJvmTypeReference(eGenericException, genOperation));
+          }
+          if (isInterface)
+          {
+            XOperation xOperation = mapper.getXOperation(genOperation);
+            XOperationMapping mapping = mapper.getMapping(xOperation);
+            mapping.setJvmOperation(jvmOperation);
           }
           return jvmOperation;
         }
@@ -2544,12 +2641,89 @@ public class XcoreJvmInferrer
   protected static final String TYPE_PARAMETER_REFERENCE_SCHEME = CommonUtil.javaIntern("type_parameter_reference");
   protected static final URI TYPE_PARAMETER_REFERENCE_SCHEME_BASE_URI = URI.createURI(TYPE_PARAMETER_REFERENCE_SCHEME + "://");
 
+  protected static class TypeReferenceHelper
+  {
+    private URI uri;
+
+    private IQualifiedNameConverter nameConverter;
+
+    private LazyCreationProxyURIConverter proxyURIConverter;
+
+    private Map<String, EGenericType> eGenericTypes = Maps.newHashMap();
+
+    private Map<String, JvmGenericType> jvmGenericTypeProxies = Maps.newHashMap();
+
+    public TypeReferenceHelper(URI uri, LazyCreationProxyURIConverter proxyURIConverter, IQualifiedNameConverter nameConverter)
+    {
+      this.uri = uri;
+      this.proxyURIConverter = proxyURIConverter;
+      this.nameConverter = nameConverter;
+    }
+
+    public EGenericType getEGenericType(String instanceTypeName)
+    {
+      EGenericType eGenericType = eGenericTypes.get(instanceTypeName);
+      if (eGenericType == null)
+      {
+        Diagnostic diagnostic = EcoreValidator.EGenericTypeBuilder.INSTANCE.parseInstanceTypeName(instanceTypeName);
+        eGenericType = (EGenericType)diagnostic.getData().get(0);
+        eGenericTypes.put(instanceTypeName, eGenericType);
+      }
+      return eGenericType;
+    }
+
+    public JvmGenericType getJvmGenericTypeProxy(String instanceTypeName)
+    {
+      JvmGenericType jvmGenericType = jvmGenericTypeProxies.get(instanceTypeName);
+      if (jvmGenericType == null)
+      {
+        jvmGenericType = TypesFactory.eINSTANCE.createJvmGenericType();
+        QualifiedName qualifiedName = nameConverter.toQualifiedName(instanceTypeName);
+        proxyURIConverter.installProxyURI(uri, jvmGenericType, qualifiedName);
+        jvmGenericTypeProxies.put(instanceTypeName, jvmGenericType);
+      }
+      return jvmGenericType;
+    }
+
+    public JvmGenericType getJvmGenericTypeParameterProxy(String typeParameterName)
+    {
+      JvmGenericType jvmGenericType = jvmGenericTypeProxies.get(typeParameterName);
+      if (jvmGenericType == null)
+      {
+        jvmGenericType = TypesFactory.eINSTANCE.createJvmGenericType();
+        jvmGenericType.setSimpleName(typeParameterName);
+        ((InternalEObject)jvmGenericType).eSetProxyURI(TYPE_PARAMETER_REFERENCE_SCHEME_BASE_URI.appendFragment(typeParameterName));
+        jvmGenericTypeProxies.put(typeParameterName, jvmGenericType);
+      }
+      return jvmGenericType;
+    }
+  }
+
+  protected TypeReferenceHelper getCache(EObject context)
+  {
+    return getCache(context.eResource());
+  }
+
+  protected TypeReferenceHelper getCache(final Resource resource)
+  {
+    return
+      cache.get
+        (TypeReferenceHelper.class,
+         resource,
+         new Provider<TypeReferenceHelper>()
+         {
+           public TypeReferenceHelper get()
+           {
+             return new TypeReferenceHelper(resource.getURI(), proxyURIConverter, nameConverter);
+           }
+         });
+  }
+
   protected JvmTypeReference getJvmTypeReference(String instanceTypeName, EObject context)
   {
     if (instanceTypeName.contains("<"))
     {
-      Diagnostic diagnostic = EcoreValidator.EGenericTypeBuilder.INSTANCE.parseInstanceTypeName(instanceTypeName);
-      return getJvmTypeReference((EGenericType)diagnostic.getData().get(0), context);
+      return getJvmTypeReference(getCache(context).getEGenericType(instanceTypeName), context);
     }
     else if (instanceTypeName.endsWith("[]"))
     {
@@ -2562,9 +2736,7 @@ public class XcoreJvmInferrer
       if ("void".equals(instanceTypeName) || CodeGenUtil.isJavaPrimitiveType(instanceTypeName))
       {
         JvmParameterizedTypeReference jvmParameterizedTypeReference = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
-        JvmGenericType jvmGenericType = TypesFactory.eINSTANCE.createJvmGenericType();
-        proxyUriConverter.installProxyURI(context.eResource().getURI(), jvmGenericType, QualifiedName.create(instanceTypeName));
-        jvmParameterizedTypeReference.setType(jvmGenericType);
+        jvmParameterizedTypeReference.setType(getCache(context).getJvmGenericTypeProxy(instanceTypeName));
         return jvmParameterizedTypeReference;
       }
       else if ("?".equals(instanceTypeName))
@@ -2575,19 +2747,13 @@ public class XcoreJvmInferrer
       else if (instanceTypeName.indexOf('.') == -1)
       {
         JvmParameterizedTypeReference jvmParameterizedTypeReference = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
-        JvmGenericType jvmGenericType = TypesFactory.eINSTANCE.createJvmGenericType();
-        jvmGenericType.setSimpleName(instanceTypeName);
-        ((InternalEObject)jvmGenericType).eSetProxyURI(TYPE_PARAMETER_REFERENCE_SCHEME_BASE_URI.appendFragment(instanceTypeName));
-        jvmParameterizedTypeReference.setType(jvmGenericType);
+        jvmParameterizedTypeReference.setType(getCache(context).getJvmGenericTypeParameterProxy(instanceTypeName));
         return jvmParameterizedTypeReference;
       }
       else
       {
-        QualifiedName qualifiedName = nameConverter.toQualifiedName(instanceTypeName);
         JvmParameterizedTypeReference jvmParameterizedTypeReference = TypesFactory.eINSTANCE.createJvmParameterizedTypeReference();
-        JvmGenericType jvmGenericType = TypesFactory.eINSTANCE.createJvmGenericType();
-        proxyUriConverter.installProxyURI(context.eResource().getURI(), jvmGenericType, qualifiedName);
-        jvmParameterizedTypeReference.setType(jvmGenericType);
+        jvmParameterizedTypeReference.setType(getCache(context).getJvmGenericTypeProxy(instanceTypeName));
         return jvmParameterizedTypeReference;
       }
     }

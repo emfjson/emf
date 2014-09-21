@@ -7,16 +7,22 @@
  */
 package org.eclipse.emf.ecore.xcore.scoping;
 
-
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.emf.codegen.ecore.genmodel.GenClassifier;
+import org.eclipse.emf.codegen.ecore.genmodel.GenModel;
 import org.eclipse.emf.codegen.ecore.genmodel.GenModelFactory;
 import org.eclipse.emf.codegen.ecore.genmodel.GenModelPackage;
 import org.eclipse.emf.codegen.ecore.genmodel.GenPackage;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
@@ -26,30 +32,34 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.xcore.XAnnotationDirective;
 import org.eclipse.emf.ecore.xcore.XImportDirective;
 import org.eclipse.emf.ecore.xcore.XPackage;
 import org.eclipse.emf.ecore.xcore.XcorePackage;
+import org.eclipse.emf.ecore.xcore.scoping.types.XcoreJvmTypeScopeProvider;
 import org.eclipse.xtext.common.types.TypesPackage;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
+import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.resource.AbstractEObjectDescription;
 import org.eclipse.xtext.resource.IEObjectDescription;
-import org.eclipse.xtext.resource.IResourceDescription;
-import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.scoping.IScope;
+import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.AbstractScope;
-import org.eclipse.xtext.scoping.impl.FilteringScope;
 import org.eclipse.xtext.scoping.impl.ImportNormalizer;
 import org.eclipse.xtext.scoping.impl.ImportScope;
 import org.eclipse.xtext.scoping.impl.ImportedNamespaceAwareLocalScopeProvider;
 import org.eclipse.xtext.scoping.impl.ScopeBasedSelectable;
+import org.eclipse.xtext.scoping.impl.SimpleScope;
+import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Strings;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-
+import com.google.inject.Provider;
 
 public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceAwareLocalScopeProvider
 {
@@ -57,120 +67,160 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
   private IQualifiedNameConverter nameConverter;
 
   @Inject
-  private IResourceDescription.Manager manager;
+  private IQualifiedNameProvider nameProvider;
+
+  @Inject
+  private IResourceScopeCache cache;
+
+  @Inject
+  private XcoreJvmTypeScopeProvider typeScopeProvider;
 
   @Override
-  protected IScope getResourceScope(IScope parent, EObject context, EReference reference)
-  {
-    IScope resourceScope = super.getResourceScope(parent, context, reference);
-    if (reference == XcorePackage.Literals.XGENERIC_TYPE__TYPE)
-    {
-      return
-        new FilteringScope
-          (new ImportScope
-            (getImplicitImports(false),
-             new EClassifierScope(resourceScope, nameConverter),
-             null,
-             GenModelPackage.Literals.GEN_BASE,
-             false),
-           new Predicate<IEObjectDescription>()
-           {
-             public boolean apply(IEObjectDescription input)
-             {
-               EObject eObjectOrProxy = input.getEObjectOrProxy();
-               return !(eObjectOrProxy instanceof GenPackage);
-             }
-           });
-    }
-    else if (reference == XcorePackage.Literals.XANNOTATION__SOURCE)
-    {
-      return
-        new ImportScope
-          (Collections.singletonList(new ImportNormalizer(nameConverter.toQualifiedName("xcore.lang"), true, false)),
-           // new XAnnotationDirectiveScope(resourceScope, context.eResource().getResourceSet()),
-           resourceScope,
-           null,
-           GenModelPackage.Literals.GEN_BASE,
-           false);
-    }
-    else
-    {
-      return resourceScope;
-    }
-  }
-
-  @Override
-  public IScope getScope(EObject context, EReference reference)
+  public IScope getScope(final EObject context, EReference reference)
   {
     if (reference == XcorePackage.Literals.XIMPORT_DIRECTIVE__IMPORTED_OBJECT)
     {
-      final IScope classifierScope = getResourceScope(context.eResource(), XcorePackage.Literals.XGENERIC_TYPE__TYPE);
-      final IScope annotationScope = getResourceScope(context.eResource(), XcorePackage.Literals.XANNOTATION__SOURCE);
-      final IScope jvmTypeScope = getResourceScope(context.eResource(), TypesPackage.Literals.JVM_PARAMETERIZED_TYPE_REFERENCE__TYPE);
-      return
-        new IScope()
-        {
-          public IEObjectDescription getSingleElement(QualifiedName name)
-          {
-            IEObjectDescription result = classifierScope.getSingleElement(name);
-
-            // Ignore also any incidental matches to aliased Ecore data types.
-            //
-            if (result == null || result instanceof EClassifierScope.EcoreDataTypeAliasEObjectDescription)
-            {
-              result = annotationScope.getSingleElement(name);
-            }
-            if (result == null)
-            {
-              result = jvmTypeScope.getSingleElement(name);
-            }
-            return result;
-          }
-
-          public Iterable<IEObjectDescription> getElements(QualifiedName name)
-          {
-            return Iterables.concat(classifierScope.getElements(name), annotationScope.getElements(name), jvmTypeScope.getElements(name));
-          }
-
-          public IEObjectDescription getSingleElement(EObject object)
-          {
-            IEObjectDescription result = classifierScope.getSingleElement(object);
-            if (result == null)
-            {
-              result = annotationScope.getSingleElement(object);
-            }
-            if (result == null)
-            {
-              result = jvmTypeScope.getSingleElement(object);
-            }
-            return result;
-          }
-
-          public Iterable<IEObjectDescription> getElements(EObject object)
-          {
-            return Iterables.concat(classifierScope.getElements(object), annotationScope.getElements(object), jvmTypeScope.getElements(object));
-          }
-
-          public Iterable<IEObjectDescription> getAllElements()
-          {
-            return Iterables.concat(classifierScope.getAllElements(), annotationScope.getAllElements(), jvmTypeScope.getAllElements());
-          }
-        };
+      final IScope jvmTypeScope = typeScopeProvider.getScope(context, reference);
+      final IScope annotationScope = getAnnotationScope(context);
+      final IScope classifierScope = getClassifierScope(context);
+      return new ImportableObjectsScope(classifierScope, annotationScope, jvmTypeScope);
     }
     else
     {
-      return super.getScope(context, reference);
+      if (context.eContainer() != null)
+      {
+        return getScope(context.eContainer(), reference);
+      }
+      else
+      {
+        if (TypesPackage.Literals.JVM_TYPE.isSuperTypeOf(reference.getEReferenceType()))
+        {
+          return typeScopeProvider.getScope(context, reference);
+        }
+        else if (reference == XcorePackage.Literals.XGENERIC_TYPE__TYPE)
+        {
+          return getClassifierScope(context);
+        }
+        else if (reference == XcorePackage.Literals.XANNOTATION__SOURCE)
+        {
+          return getAnnotationScope(context);
+        }
+        else
+        {
+          throw new IllegalArgumentException("Scope for unknown reference " + reference + " requested");
+        }
+      }
     }
   }
 
+  private IScope getAnnotationScope(final EObject context)
+  {
+    String cacheKey = (context instanceof XImportDirective) ? "import.annoation.scope" : "annotation.scope";
+    return cache.get(cacheKey, context.eResource(), new Provider<IScope>()
+    {
+      public IScope get()
+      {
+        IScope globalScope = getGlobalScope(context.eResource(), XcorePackage.Literals.XANNOTATION__SOURCE);
+        ImportNormalizer xcoreLang = new ImportNormalizer(nameConverter.toQualifiedName("xcore.lang"), true, false);
+        ImportScope xcoreLangScope = createImportScope(globalScope, singletonList(xcoreLang), null, XcorePackage.Literals.XANNOTATION_DIRECTIVE, false);
+        ImportScope importScope = createImportScope(xcoreLangScope, getImportedNamespaceResolvers(context, false), null, XcorePackage.Literals.XANNOTATION_DIRECTIVE, false);
+        IScope resourceScope = getLocalAnnotationsScope(context.eResource(), importScope);
+        return new CachingScope(resourceScope);
+      }
+    });
+  }
+
+  private IScope getClassifierScope(final EObject context)
+  {
+    String cacheKey = (context instanceof XImportDirective) ? "import.classifier.scope" : "classifier.scope";
+    final Resource resource = context.eResource();
+    return cache.get(cacheKey, resource, new Provider<IScope>()
+    {
+      public IScope get()
+      {
+        IScope globalScope = getGlobalScope(resource, XcorePackage.Literals.XGENERIC_TYPE__TYPE, new Predicate<IEObjectDescription>()
+        {
+          public boolean apply(IEObjectDescription input)
+          {
+            EClass eClass = input.getEClass();
+            return GenModelPackage.Literals.GEN_CLASSIFIER.isSuperTypeOf(eClass) || eClass == GenModelPackage.Literals.GEN_ANNOTATION || eClass == GenModelPackage.Literals.GEN_TYPE_PARAMETER;
+          }
+        });
+        EcoreDataTypeAliasingScope aliasingScope = new EcoreDataTypeAliasingScope(globalScope, nameConverter);
+        List<ImportNormalizer> importedNamespaceResolvers = Lists.newArrayList(getImportedNamespaceResolvers(context, false));
+        Set<String> names = new HashSet<String>();
+        for (ImportNormalizer importNormalizer : importedNamespaceResolvers)
+        {
+          if (!importNormalizer.hasWildCard())
+          {
+            names.add(importNormalizer.getImportedNamespacePrefix().getLastSegment());
+          }
+        }
+
+        for (String implicitImport : IMPLICIT_IMPORTS)
+        {
+          ImportNormalizer importedNamespaceResolver = createImportedNamespaceResolver(implicitImport, false);
+          if (!names.contains(importedNamespaceResolver.getImportedNamespacePrefix().getLastSegment()))
+          {
+            importedNamespaceResolvers.add(importedNamespaceResolver);
+          }
+        }
+
+        ImportScope importScope = createImportScope(aliasingScope, importedNamespaceResolvers, null, GenModelPackage.Literals.GEN_BASE, false);
+
+        IScope resourceScope = getLocalClassifiersScope(resource, importScope);
+        return new CachingScope(resourceScope);
+      }
+    });
+  }
+
+  /*
+   * This is much faster than creating resource descriptions for all elements and then filtering out the interesting ones.
+   */
+  private IScope getLocalAnnotationsScope(Resource resource, IScope parent)
+  {
+    XPackage xPackage = (XPackage)resource.getContents().get(0);
+    List<XAnnotationDirective> directives = xPackage.getAnnotationDirectives();
+    return directives.isEmpty() ? parent : createLocalElementsScope(parent, directives, xPackage, GenModelPackage.Literals.GEN_BASE);
+  }
+
+  /*
+   * This is much faster than creating resource descriptions for all elements and then filtering out the interesting ones.
+   */
+  private IScope getLocalClassifiersScope(Resource resource, IScope parent)
+  {
+    EList<EObject> contents = resource.getContents();
+    XPackage xPackage = (XPackage)contents.get(0);
+    List<GenClassifier> classifiers = newArrayList();
+    EList<GenPackage> genPackages = ((GenModel)contents.get(1)).getGenPackages();
+    for (GenPackage genPackage : genPackages)
+    {
+      classifiers.addAll(genPackage.getGenClassifiers());
+    }
+    return classifiers.isEmpty() ? parent : createLocalElementsScope(parent, classifiers, xPackage, GenModelPackage.Literals.GEN_BASE);
+  }
+
+  private IScope createLocalElementsScope(IScope parent, List<? extends EObject> elements, XPackage xPackage, EClass type)
+  {
+    List<IEObjectDescription> eagerlyResolvedDescriptions = newArrayList(Scopes.scopedElementsFor(elements, nameProvider));
+    IScope localScope = new SimpleScope(eagerlyResolvedDescriptions);
+    String name = xPackage.getName();
+    if (Strings.isEmpty(name))
+    {
+      return localScope;
+    }
+    ImportNormalizer localNormalizer = doCreateImportNormalizer(nameConverter.toQualifiedName(name), true, false);
+    return createImportScope(parent, singletonList(localNormalizer), new ScopeBasedSelectable(localScope), type, false);
+  }
+
+  /*
+   * This creates the same result as the super implementation,
+   * but much faster since it knows where to look for imports instead of iterating all contents
+   */
   @Override
   protected List<ImportNormalizer> internalGetImportedNamespaceResolvers(EObject context, boolean ignoreCase)
   {
-    if (!(context instanceof XPackage))
-    {
-      return Collections.emptyList();
-    }
-    else
+    if (context instanceof XPackage)
     {
       List<ImportNormalizer> importedNamespaceResolvers = Lists.newArrayList();
       XPackage xPackage = (XPackage)context;
@@ -178,207 +228,9 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
       {
         importedNamespaceResolvers.add(createImportedNamespaceResolver(xImportDirective.getImportedNamespace(), ignoreCase));
       }
-      String name = xPackage.getName();
-      if (!Strings.isEmpty(name))
-      {
-        importedNamespaceResolvers.add(new ImportNormalizer(nameConverter.toQualifiedName(name), true, ignoreCase));
-      }
       return importedNamespaceResolvers;
     }
-  }
-
-  @Override
-  protected ImportNormalizer createImportedNamespaceResolver(String namespace, boolean ignoreCase)
-  {
-    if (!Strings.isEmpty(namespace))
-    {
-      QualifiedName importedNamespace = nameConverter.toQualifiedName(namespace);
-      if (importedNamespace != null && importedNamespace.getSegmentCount() >= 1)
-      {
-        if (importedNamespace.getLastSegment().equals(getWildCard()))
-        {
-          if (importedNamespace.getSegmentCount() > 1)
-          {
-            return createImportNormalizer(importedNamespace.skipLast(1), true, ignoreCase);
-          }
-        }
-        else
-        {
-          return createImportNormalizer(importedNamespace, false, ignoreCase);
-        }
-      }
-    }
-    return null;
-  }
-
-  @Override
-  protected IScope getLocalElementsScope(IScope parent, EObject context, EReference reference)
-  {
-    IScope result = parent;
-    ISelectable allDescriptions = getAllDescriptions(context.eResource());
-    ScopeBasedSelectable parentSelectable = new ScopeBasedSelectable(parent);
-    QualifiedName name = getQualifiedNameOfLocalElement(context);
-    boolean ignoreCase = isIgnoreCase(reference);
-    if (context instanceof XPackage)
-    {
-      result = createImportScope(result, singletonList(createImportNormalizer(QualifiedName.create("java", "lang"), true, false)), parentSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
-    }
-    List<ImportNormalizer> namespaceResolvers = getImportedNamespaceResolvers(context, ignoreCase);
-    if (!namespaceResolvers.isEmpty())
-    {
-      result = createImportScope(result, namespaceResolvers, parentSelectable, reference.getEReferenceType(), ignoreCase);
-    }
-    if (name != null)
-    {
-      ImportNormalizer localNormalizer = createImportNormalizer(name, true, ignoreCase);
-      result = createImportScope(result, singletonList(localNormalizer), allDescriptions, reference.getEReferenceType(), ignoreCase);
-    }
-    return result;
-  }
-
-  protected ImportNormalizer createImportNormalizer(QualifiedName importedNamespace, boolean wildCard, boolean ignoreCase)
-  {
-    return
-      new ImportNormalizer(importedNamespace, wildCard, ignoreCase)
-      {
-        @Override
-        public QualifiedName deresolve(QualifiedName fullyQualifiedName)
-        {
-          QualifiedName importedNamespacePrefix = getImportedNamespacePrefix();
-          boolean ignoreCase = isIgnoreCase();
-          if (hasWildCard())
-          {
-            if (fullyQualifiedName.getSegmentCount() != importedNamespacePrefix.getSegmentCount() &&
-                  (ignoreCase ? fullyQualifiedName.startsWithIgnoreCase(importedNamespacePrefix) : fullyQualifiedName.startsWith(importedNamespacePrefix)))
-            {
-              return fullyQualifiedName.skipFirst(importedNamespacePrefix.getSegmentCount());
-            }
-          }
-          else
-          {
-            if (fullyQualifiedName.equals(importedNamespacePrefix))
-            {
-              String lastSegment = fullyQualifiedName.getLastSegment();
-              int dollar = lastSegment.lastIndexOf('$');
-              return QualifiedName.create(dollar >= 0 ? lastSegment.substring(dollar + 1) : fullyQualifiedName.getLastSegment());
-            }
-            QualifiedName fullyQualifiedNameBase = fullyQualifiedName.skipLast(1);
-            QualifiedName importedNamespacePrefixBase = importedNamespacePrefix.skipLast(1);
-            if (ignoreCase ? fullyQualifiedNameBase.equalsIgnoreCase(importedNamespacePrefixBase) : fullyQualifiedNameBase.equals(importedNamespacePrefixBase))
-            {
-              String lastImportedSegment = importedNamespacePrefix.getLastSegment();
-              String lastSegment = fullyQualifiedName.getLastSegment();
-              int lastImportedSegmentLength = lastImportedSegment.length();
-              if (lastSegment.length() > lastImportedSegmentLength &&
-                    lastSegment.charAt(lastImportedSegmentLength) == '$' &&
-                    (ignoreCase ?
-                       lastSegment.substring(0, lastImportedSegmentLength).equalsIgnoreCase(lastImportedSegment) :
-                       lastSegment.startsWith(lastImportedSegment)))
-              {
-                int dollar = lastImportedSegment.lastIndexOf('$');
-                return
-                  dollar == -1 ?
-                    fullyQualifiedName.skipFirst(importedNamespacePrefix.getSegmentCount() - 1) :
-                    QualifiedName.create(lastSegment.substring(dollar + 1));
-              }
-            }
-          }
-          return null;
-        }
-
-        @Override
-        public QualifiedName resolve(QualifiedName relativeName)
-        {
-          QualifiedName importedNamespacePrefix = getImportedNamespacePrefix();
-          if (hasWildCard())
-          {
-            return importedNamespacePrefix.append(relativeName);
-          }
-          else
-          {
-            if (relativeName.getSegmentCount() == 1)
-            {
-              String lastSegment = relativeName.getLastSegment();
-              String lastImportedSegment = importedNamespacePrefix.getLastSegment();
-              boolean ignoreCase = isIgnoreCase();
-              if (ignoreCase ? lastSegment.equalsIgnoreCase(lastImportedSegment) : lastSegment.equals(lastImportedSegment))
-              {
-                return importedNamespacePrefix;
-              }
-              else
-              {
-                int dollar = lastSegment.indexOf('$');
-                if (dollar >= 0)
-                {
-                  int lastImportedSegmentLength = lastImportedSegment.length();
-                  if (dollar == lastImportedSegmentLength &&
-                        (ignoreCase ?
-                           (lastSegment.length() > lastImportedSegmentLength && lastSegment.substring(0, lastImportedSegmentLength).equalsIgnoreCase(lastImportedSegment)) :
-                           lastSegment.startsWith(lastImportedSegment)))
-                  {
-                    return importedNamespacePrefix.skipLast(1).append(lastSegment);
-                  }
-                }
-                int importedDollar = lastImportedSegment.lastIndexOf('$');
-                if (importedDollar >= 0)
-                {
-                  String nestedTypeName = lastImportedSegment.substring(importedDollar + 1);
-                  int nestedTypeNameLength = nestedTypeName.length();
-                  if (ignoreCase ?
-                        (lastSegment.length() > nestedTypeNameLength && lastSegment.substring(0, nestedTypeNameLength).equalsIgnoreCase(nestedTypeName)) :
-                        lastSegment.startsWith(nestedTypeName))
-                  {
-                    if (nestedTypeNameLength == lastSegment.length())
-                    {
-                      return importedNamespacePrefix;
-                    }
-                    else if (lastSegment.charAt(nestedTypeNameLength) == '$')
-                    {
-                      return importedNamespacePrefix.skipLast(1).append(lastImportedSegment + lastSegment.substring(nestedTypeNameLength));
-                    }
-                  }
-                }
-              }
-            }
-          }
-          return null;
-        }
-      };
-  }
-
-  @Override
-  protected ImportScope createImportScope(IScope parent, List<ImportNormalizer> namespaceResolvers, ISelectable importFrom, final EClass type, boolean ignoreCase)
-  {
-    // Ensure that qualified names with more than one component don't resolve against wildcard imports.
-    //
-    return
-      new ImportScope(namespaceResolvers, parent, importFrom, type, ignoreCase)
-      {
-        @Override
-        protected IEObjectDescription getSingleLocalElementByName(QualifiedName name)
-        {
-          return name.getSegmentCount() > 1 && type == GenModelPackage.Literals.GEN_BASE ? null : super.getSingleLocalElementByName(name);
-        }
-
-        @Override
-        protected Iterable<IEObjectDescription> getLocalElementsByName(QualifiedName name)
-        {
-          return name.getSegmentCount() > 1 && type == GenModelPackage.Literals.GEN_BASE ? Collections.<IEObjectDescription>emptyList() : super.getLocalElementsByName(name);
-        }
-      };
-  }
-
-  @Override
-  protected boolean isRelativeImport()
-  {
-    return false;
-  }
-
-  @Override
-  protected ISelectable internalGetAllDescriptions(Resource resource)
-  {
-    IResourceDescription description = manager.getResourceDescription(resource);
-    return description;
+    return Collections.emptyList();
   }
 
   public static final EDataType[] IMPLICIT_ALIASES =
@@ -407,7 +259,83 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
       EcorePackage.Literals.ESTRING
     };
 
-  protected static class EClassifierScope extends AbstractScope
+  private static final String[] IMPLICIT_IMPORTS;
+
+  static
+  {
+    List<String> implicitImports = Lists.newArrayList();
+    for (EDataType eDataType : IMPLICIT_ALIASES)
+    {
+      String instanceClassName = eDataType.getInstanceClassName();
+      if (instanceClassName.indexOf('.') != -1 && !instanceClassName.startsWith("java.lang."))
+      {
+        implicitImports.add(instanceClassName);
+      }
+    }
+
+    implicitImports.add("java.lang.*");
+
+    IMPLICIT_IMPORTS = implicitImports.toArray(new String[implicitImports.size()]);
+  }
+
+  private static final class ImportableObjectsScope implements IScope
+  {
+    private final IScope classifierScope;
+    private final IScope jvmTypeScope;
+    private final IScope annotationScope;
+
+    private ImportableObjectsScope(IScope classifierScope, IScope annotationScope, IScope jvmTypeScope)
+    {
+      this.classifierScope = classifierScope;
+      this.jvmTypeScope = jvmTypeScope;
+      this.annotationScope = annotationScope;
+    }
+
+    public IEObjectDescription getSingleElement(QualifiedName name)
+    {
+      IEObjectDescription result = classifierScope.getSingleElement(name);
+      if (result == null || result instanceof EcoreDataTypeAliasingScope.EcoreDataTypeAliasEObjectDescription)
+      {
+        result = annotationScope.getSingleElement(name);
+      }
+      if (result == null)
+      {
+        result = jvmTypeScope.getSingleElement(name);
+      }
+      return result;
+    }
+
+    public Iterable<IEObjectDescription> getElements(QualifiedName name)
+    {
+      return Iterables.concat(classifierScope.getElements(name), annotationScope.getElements(name), jvmTypeScope.getElements(name));
+    }
+
+    public IEObjectDescription getSingleElement(EObject object)
+    {
+      IEObjectDescription result = classifierScope.getSingleElement(object);
+      if (result == null)
+      {
+        result = annotationScope.getSingleElement(object);
+      }
+      if (result == null)
+      {
+        result = jvmTypeScope.getSingleElement(object);
+      }
+      return result;
+    }
+
+    public Iterable<IEObjectDescription> getElements(EObject object)
+    {
+      return Iterables.concat(classifierScope.getElements(object), annotationScope.getElements(object), jvmTypeScope.getElements(object));
+    }
+
+    public Iterable<IEObjectDescription> getAllElements()
+    {
+      return Iterables.concat(classifierScope.getAllElements(), annotationScope.getAllElements(), jvmTypeScope.getAllElements());
+    }
+  }
+
+  private static class EcoreDataTypeAliasingScope extends AbstractScope
   {
     private class EcoreDataTypeAliasEObjectDescription extends AbstractEObjectDescription
     {
@@ -479,7 +407,7 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
 
     private IQualifiedNameConverter nameConverter;
 
-    public EClassifierScope(IScope parent, IQualifiedNameConverter nameConverter)
+    public EcoreDataTypeAliasingScope(IScope parent, IQualifiedNameConverter nameConverter)
     {
       super(parent, false);
       this.nameConverter = nameConverter;
@@ -494,9 +422,8 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
         String instanceClassName = eDataType.getInstanceClassName();
         final QualifiedName actualQualifiedName = QualifiedName.create("org", "eclipse", "emf", "ecore", eDataType.getName());
         final QualifiedName qualifiedName = nameConverter.toQualifiedName(instanceClassName);
-        AbstractEObjectDescription eObjectDescription =
-          new EcoreDataTypeAliasEObjectDescription(qualifiedName, actualQualifiedName, eDataType);
-        result.add(eObjectDescription);
+        AbstractEObjectDescription qualifiedObjectDescription = new EcoreDataTypeAliasEObjectDescription(qualifiedName, actualQualifiedName, eDataType);
+        result.add(qualifiedObjectDescription);
       }
       return result;
     }
@@ -514,5 +441,45 @@ public class XcoreImportedNamespaceAwareScopeProvider extends ImportedNamespaceA
       xcoreLangResource.setURI(LOGICAL_XCORE_LANG_URI);
     }
     return xcoreLangResource;
+  }
+
+  private static class CachingScope extends AbstractScope
+  {
+    private final Map<QualifiedName, IEObjectDescription> cache;
+
+    public CachingScope(IScope parent)
+    {
+      super(parent, true);
+      this.cache = Maps.newHashMapWithExpectedSize(50);
+    }
+
+    @Override
+    public IEObjectDescription getSingleElement(QualifiedName name)
+    {
+      IEObjectDescription cached = cache.get(name);
+      if (cached == null)
+      {
+        if (cache.containsKey(name))
+        {
+          return null;
+        }
+        cached = getParent().getSingleElement(name);
+        cache.put(name, cached);
+      }
+      return cached;
+    }
+
+    @Override
+    public Iterable<IEObjectDescription> getElements(QualifiedName name)
+    {
+      IEObjectDescription element = getSingleElement(name);
+      return element == null ? Collections.<IEObjectDescription>emptyList() : Collections.singletonList(element);
+    }
+
+    @Override
+    protected Iterable<IEObjectDescription> getAllLocalElements()
+    {
+      return Collections.emptyList();
+    }
   }
 }

@@ -1153,6 +1153,16 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
    * <!-- end-user-doc -->
    * @generated
    */
+  public EAttribute getGenModel_OSGiCompatible()
+  {
+    return (EAttribute)genModelEClass.getEStructuralFeatures().get(85);
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
   public EClass getGenPackage()
   {
     return genPackageEClass;
@@ -1446,6 +1456,16 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
   public EReference getGenPackage_GenClassifiers()
   {
     return (EReference)genPackageEClass.getEStructuralFeatures().get(28);
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
+  public EAttribute getGenPackage_PublicationLocation()
+  {
+    return (EAttribute)genPackageEClass.getEStructuralFeatures().get(29);
   }
 
   /**
@@ -2154,6 +2174,7 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
     createEAttribute(genModelEClass, GEN_MODEL__DECORATION);
     createEAttribute(genModelEClass, GEN_MODEL__STYLE_PROVIDERS);
     createEAttribute(genModelEClass, GEN_MODEL__CLEANUP);
+    createEAttribute(genModelEClass, GEN_MODEL__OS_GI_COMPATIBLE);
 
     genPackageEClass = createEClass(GEN_PACKAGE);
     createEAttribute(genPackageEClass, GEN_PACKAGE__PREFIX);
@@ -2185,6 +2206,7 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
     createEReference(genPackageEClass, GEN_PACKAGE__GEN_CLASSES);
     createEReference(genPackageEClass, GEN_PACKAGE__NESTED_GEN_PACKAGES);
     createEReference(genPackageEClass, GEN_PACKAGE__GEN_CLASSIFIERS);
+    createEAttribute(genPackageEClass, GEN_PACKAGE__PUBLICATION_LOCATION);
 
     genClassEClass = createEClass(GEN_CLASS);
     createEAttribute(genClassEClass, GEN_CLASS__PROVIDER);
@@ -2393,6 +2415,7 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
     initEAttribute(getGenModel_Decoration(), this.getGenDecoration(), "decoration", null, 0, 1, GenModel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
     initEAttribute(getGenModel_StyleProviders(), ecorePackage.getEBoolean(), "styleProviders", null, 0, 1, GenModel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
     initEAttribute(getGenModel_Cleanup(), ecorePackage.getEBoolean(), "cleanup", null, 0, 1, GenModel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+    initEAttribute(getGenModel_OSGiCompatible(), theEcorePackage.getEBoolean(), "oSGiCompatible", null, 0, 1, GenModel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
     initEClass(genPackageEClass, GenPackage.class, "GenPackage", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
     initEAttribute(getGenPackage_Prefix(), ecorePackage.getEString(), "prefix", null, 0, 1, GenPackage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -2424,6 +2447,7 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
     initEReference(getGenPackage_GenClasses(), this.getGenClass(), null, "genClasses", null, 0, -1, GenPackage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
     initEReference(getGenPackage_NestedGenPackages(), this.getGenPackage(), null, "nestedGenPackages", null, 0, -1, GenPackage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
     initEReference(getGenPackage_GenClassifiers(), this.getGenClassifier(), this.getGenClassifier_GenPackage(), "genClassifiers", null, 0, -1, GenPackage.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+    initEAttribute(getGenPackage_PublicationLocation(), theEcorePackage.getEString(), "publicationLocation", null, 0, 1, GenPackage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
     initEClass(genClassEClass, GenClass.class, "GenClass", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
     initEAttribute(getGenClass_Provider(), this.getGenProviderKind(), "provider", null, 0, 1, GenClass.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -2519,6 +2543,7 @@ public class GenModelPackageImpl extends EPackageImpl implements GenModelPackage
     addEEnumLiteral(genJDKLevelEEnum, GenJDKLevel.JDK50_LITERAL);
     addEEnumLiteral(genJDKLevelEEnum, GenJDKLevel.JDK60_LITERAL);
     addEEnumLiteral(genJDKLevelEEnum, GenJDKLevel.JDK70_LITERAL);
+    addEEnumLiteral(genJDKLevelEEnum, GenJDKLevel.JDK80_LITERAL);
 
     initEEnum(genRuntimeVersionEEnum, GenRuntimeVersion.class, "GenRuntimeVersion");
     addEEnumLiteral(genRuntimeVersionEEnum, GenRuntimeVersion.EMF22);

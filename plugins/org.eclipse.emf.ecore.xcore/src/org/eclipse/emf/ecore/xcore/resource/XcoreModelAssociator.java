@@ -24,6 +24,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.xcore.XDataType;
 import org.eclipse.emf.ecore.xcore.XModelElement;
 import org.eclipse.emf.ecore.xcore.XNamedElement;
@@ -44,19 +45,26 @@ import org.eclipse.xtext.common.types.TypesPackage;
 import org.eclipse.xtext.parser.antlr.IReferableElementsUnloader;
 import org.eclipse.xtext.resource.DerivedStateAwareResource;
 import org.eclipse.xtext.resource.IDerivedStateComputer;
+import org.eclipse.xtext.util.OnChangeEvictingCache;
+import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 import org.eclipse.xtext.xbase.XBlockExpression;
 import org.eclipse.xtext.xbase.XExpression;
 import org.eclipse.xtext.xbase.jvmmodel.IJvmModelAssociations;
 import org.eclipse.xtext.xbase.jvmmodel.ILogicalContainerProvider;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
-
+@Singleton
 public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalContainerProvider, IDerivedStateComputer
 {
+  @Inject
+  private OnChangeEvictingCache cache;
+
   @Inject
   protected XcoreJvmInferrer jvmInferrer;
 
@@ -80,15 +88,22 @@ public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalCont
     if (resource.getParseResult() != null && resource.getParseResult().getRootASTElement() instanceof XPackage)
     {
       XPackage model = (XPackage)resource.getParseResult().getRootASTElement();
-      XcoreEcoreBuilder xcoreEcoreBuilder = xcoreEcoreBuilderProvider.get();
+      final XcoreEcoreBuilder xcoreEcoreBuilder = xcoreEcoreBuilderProvider.get();
       EPackage ePackage = xcoreEcoreBuilder.getEPackage(model);
       resource.getContents().add(ePackage);
-      GenModel genModel = genModelBuilder.getGenModel(model);
+      final GenModel genModel = genModelBuilder.getGenModel(model);
       genModel.setCanGenerate(true);
       Collection<? extends Runnable> runnables = genModelInitializer.initialize(genModel, true);
       if (!preLinkingPhase)
       {
-        xcoreEcoreBuilder.link();
+        cache.execWithoutCacheClear(resource, new IUnitOfWork.Void<Resource>()
+        {
+          @Override
+          public void process(Resource state) throws Exception
+          {
+            xcoreEcoreBuilder.link();
+          }
+        });
         genModelBuilder.initializeUsedGenPackages(genModel);
 
         for (Runnable runnable : runnables)
@@ -116,7 +131,7 @@ public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalCont
                 if (eClassifier instanceof EClass)
                 {
                   EClass eClass = (EClass)eClassifier;
-                  
+
                   // If one of the super types is from the Ecore package and isn't EObject, we need Ecore edit support.
                   //
                   for (EClass eSuperType : eClass.getEAllSuperTypes())
@@ -155,8 +170,15 @@ public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalCont
       resource.getContents().addAll(jvmInferrer.inferElements(genModel));
       if (!preLinkingPhase)
       {
-        xcoreEcoreBuilder.linkInstanceTypes();
-        jvmInferrer.inferDeepStructure(genModel);
+        cache.execWithoutCacheClear(resource, new IUnitOfWork.Void<Resource>()
+        {
+          @Override
+          public void process(Resource state) throws Exception
+          {
+            xcoreEcoreBuilder.linkInstanceTypes();
+            jvmInferrer.inferDeepStructure(genModel);
+          }
+        });
       }
       resource.getCache().clear(resource);
     }
@@ -269,12 +291,12 @@ public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalCont
     return xcoreElement;
   }
 
-  public JvmIdentifiableElement getLogicalContainer(EObject eObject)
+  public JvmIdentifiableElement getLogicalContainer(XExpression xExpression)
   {
-    if (eObject instanceof XBlockExpression)
+    if (xExpression instanceof XBlockExpression)
     {
-      EObject eContainer = eObject.eContainer();
-      EReference eContainmentFeature = eObject.eContainmentFeature();
+      EObject eContainer = xExpression.eContainer();
+      EReference eContainmentFeature = xExpression.eContainmentFeature();
       if (eContainmentFeature == XcorePackage.Literals.XOPERATION__BODY)
       {
         return mapper.getMapping((XOperation)eContainer).getJvmOperation();
@@ -317,10 +339,19 @@ public class XcoreModelAssociator implements IJvmModelAssociations, ILogicalCont
     {
       if (eContainer instanceof XExpression && eContainer.eContainer() instanceof XModelElement)
       {
-        return getLogicalContainer(eContainer);
+        return getLogicalContainer((XExpression)eContainer);
       }
     }
     return null;
   }
 
+  public EObject getPrimaryJvmElement(EObject sourceElement)
+  {
+    return Iterables.getFirst(getJvmElements(sourceElement), null);
+  }	
+
+  public boolean isPrimaryJvmElement(EObject jvmElement)
+  {
+    return getPrimaryJvmElement(getPrimarySourceElement(jvmElement)) == jvmElement;
+  }
 }

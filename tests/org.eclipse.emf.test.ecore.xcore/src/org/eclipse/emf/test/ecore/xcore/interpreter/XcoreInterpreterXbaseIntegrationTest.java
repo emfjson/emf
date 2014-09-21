@@ -47,6 +47,18 @@ public class XcoreInterpreterXbaseIntegrationTest extends AbstractXbaseEvaluatio
   }
 
   @Override
+  @Test public void testSwitchExpressionOverEnum_6() throws Exception {
+		assertEvaluatesTo(null, 
+				"{\n" + 
+				"  val Enum<?> e = null\n" + 
+				"  switch(e) {\n" + 
+				"    java.lang.^annotation.RetentionPolicy: e.toString\n" + 
+				"    java.lang.^annotation.ElementType: e.toString\n" + 
+				"  }\n" + 
+				"}");
+	}
+
+  @Override
   @Test 
   public void testReservedWordEnum() throws Exception 
   {
@@ -83,6 +95,21 @@ public class XcoreInterpreterXbaseIntegrationTest extends AbstractXbaseEvaluatio
     try
     {
       super.testArrays_02();
+      fail("Expecting an exception; it must be working now.");
+    }
+    catch (Exception exception)
+    {
+      // Expecting it to fail right now.
+    }
+  }
+
+  @Override
+  @Test
+  public void testArrays_04() throws Exception
+  {
+    try
+    {
+      super.testArrays_04();
       fail("Expecting an exception; it must be working now.");
     }
     catch (Exception exception)

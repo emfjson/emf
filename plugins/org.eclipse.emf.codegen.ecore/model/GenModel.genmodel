@@ -38,6 +38,7 @@
       <genEnumLiterals ecoreEnumLiteral="GenModel.ecore#//GenJDKLevel/JDK50"/>
       <genEnumLiterals ecoreEnumLiteral="GenModel.ecore#//GenJDKLevel/JDK60"/>
       <genEnumLiterals ecoreEnumLiteral="GenModel.ecore#//GenJDKLevel/JDK70"/>
+      <genEnumLiterals ecoreEnumLiteral="GenModel.ecore#//GenJDKLevel/JDK80"/>
     </genEnums>
     <genEnums typeSafeEnumCompatible="false" ecoreEnum="GenModel.ecore#//GenRuntimeVersion">
       <genEnumLiterals ecoreEnumLiteral="GenModel.ecore#//GenRuntimeVersion/EMF22"/>
@@ -227,6 +228,8 @@
           ecoreFeature="ecore:EAttribute GenModel.ecore#//GenModel/styleProviders"/>
       <genFeatures createChild="false" propertyCategory="JET" propertyDescription="Whether to invoke the configured source clean actions after generating"
           ecoreFeature="ecore:EAttribute GenModel.ecore#//GenModel/cleanup"/>
+      <genFeatures createChild="false" propertyCategory="All" propertyDescription="Whether to generate bundles that are purely compatible with any OSGi runtime implementation"
+          ecoreFeature="ecore:EAttribute GenModel.ecore#//GenModel/oSGiCompatible"/>
     </genClasses>
     <genClasses image="false" ecoreClass="GenModel.ecore#//GenPackage">
       <genFeatures createChild="false" propertyCategory="All" propertyDescription="The prefix for names of several packaged-related classes, including package, factory, switch, and adapter factory"
@@ -281,6 +284,8 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference GenModel.ecore#//GenPackage/genClasses"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference GenModel.ecore#//GenPackage/nestedGenPackages"/>
       <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference GenModel.ecore#//GenPackage/genClassifiers"/>
+      <genFeatures createChild="false" propertyCategory="Model" propertyDescription="The workspace-relative location at which to generate a published version of the Ecore model resource"
+          ecoreFeature="ecore:EAttribute GenModel.ecore#//GenPackage/publicationLocation"/>
     </genClasses>
     <genClasses image="false" ecoreClass="GenModel.ecore#//GenClass">
       <genFeatures createChild="false" propertyCategory="Edit" propertyDescription="Whether to generate an item provider and which pattern to use"

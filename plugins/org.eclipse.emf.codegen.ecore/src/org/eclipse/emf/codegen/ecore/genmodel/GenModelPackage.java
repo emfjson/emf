@@ -893,13 +893,22 @@ public interface GenModelPackage extends EPackage
   int GEN_MODEL__CLEANUP = GEN_BASE_FEATURE_COUNT + 84;
 
   /**
+   * The feature id for the '<em><b>OS Gi Compatible</b></em>' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   * @ordered
+   */
+  int GEN_MODEL__OS_GI_COMPATIBLE = GEN_BASE_FEATURE_COUNT + 85;
+
+  /**
    * The number of structural features of the '<em>Gen Model</em>' class.
    * <!-- begin-user-doc -->
    * <!-- end-user-doc -->
    * @generated
    * @ordered
    */
-  int GEN_MODEL_FEATURE_COUNT = GEN_BASE_FEATURE_COUNT + 85;
+  int GEN_MODEL_FEATURE_COUNT = GEN_BASE_FEATURE_COUNT + 86;
 
   /**
    * The meta object id for the '{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl <em>Gen Package</em>}' class.
@@ -1182,13 +1191,22 @@ public interface GenModelPackage extends EPackage
   int GEN_PACKAGE__GEN_CLASSIFIERS = GEN_BASE_FEATURE_COUNT + 28;
 
   /**
+   * The feature id for the '<em><b>Publication Location</b></em>' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   * @ordered
+   */
+  int GEN_PACKAGE__PUBLICATION_LOCATION = GEN_BASE_FEATURE_COUNT + 29;
+
+  /**
    * The number of structural features of the '<em>Gen Package</em>' class.
    * <!-- begin-user-doc -->
    * <!-- end-user-doc -->
    * @generated
    * @ordered
    */
-  int GEN_PACKAGE_FEATURE_COUNT = GEN_BASE_FEATURE_COUNT + 29;
+  int GEN_PACKAGE_FEATURE_COUNT = GEN_BASE_FEATURE_COUNT + 30;
 
   /**
    * The meta object id for the '{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenClassifierImpl <em>Gen Classifier</em>}' class.
@@ -2938,6 +2956,17 @@ public interface GenModelPackage extends EPackage
   EAttribute getGenModel_Cleanup();
 
   /**
+   * Returns the meta object for the attribute '{@link org.eclipse.emf.codegen.ecore.genmodel.GenModel#isOSGiCompatible <em>OS Gi Compatible</em>}'.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @return the meta object for the attribute '<em>OS Gi Compatible</em>'.
+   * @see org.eclipse.emf.codegen.ecore.genmodel.GenModel#isOSGiCompatible()
+   * @see #getGenModel()
+   * @generated
+   */
+  EAttribute getGenModel_OSGiCompatible();
+
+  /**
    * Returns the meta object for class '{@link org.eclipse.emf.codegen.ecore.genmodel.GenPackage <em>Gen Package</em>}'.
    * <!-- begin-user-doc -->
    * <!-- end-user-doc -->
@@ -3265,6 +3294,17 @@ public interface GenModelPackage extends EPackage
    * @generated
    */
   EReference getGenPackage_GenClassifiers();
+
+  /**
+   * Returns the meta object for the attribute '{@link org.eclipse.emf.codegen.ecore.genmodel.GenPackage#getPublicationLocation <em>Publication Location</em>}'.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @return the meta object for the attribute '<em>Publication Location</em>'.
+   * @see org.eclipse.emf.codegen.ecore.genmodel.GenPackage#getPublicationLocation()
+   * @see #getGenPackage()
+   * @generated
+   */
+  EAttribute getGenPackage_PublicationLocation();
 
   /**
    * Returns the meta object for class '{@link org.eclipse.emf.codegen.ecore.genmodel.GenClass <em>Gen Class</em>}'.
@@ -4610,6 +4650,14 @@ public interface GenModelPackage extends EPackage
     EAttribute GEN_MODEL__CLEANUP = eINSTANCE.getGenModel_Cleanup();
 
     /**
+     * The meta object literal for the '<em><b>OS Gi Compatible</b></em>' attribute feature.
+     * <!-- begin-user-doc -->
+     * <!-- end-user-doc -->
+     * @generated
+     */
+    EAttribute GEN_MODEL__OS_GI_COMPATIBLE = eINSTANCE.getGenModel_OSGiCompatible();
+
+    /**
      * The meta object literal for the '{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl <em>Gen Package</em>}' class.
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
@@ -4850,6 +4898,14 @@ public interface GenModelPackage extends EPackage
      * @generated
      */
     EReference GEN_PACKAGE__GEN_CLASSIFIERS = eINSTANCE.getGenPackage_GenClassifiers();
+
+    /**
+     * The meta object literal for the '<em><b>Publication Location</b></em>' attribute feature.
+     * <!-- begin-user-doc -->
+     * <!-- end-user-doc -->
+     * @generated
+     */
+    EAttribute GEN_PACKAGE__PUBLICATION_LOCATION = eINSTANCE.getGenPackage_PublicationLocation();
 
     /**
      * The meta object literal for the '{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenClassImpl <em>Gen Class</em>}' class.

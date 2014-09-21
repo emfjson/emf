@@ -38,6 +38,7 @@ import org.eclipse.emf.codegen.ecore.genmodel.GenModelFactory;
 import org.eclipse.emf.codegen.ecore.genmodel.GenModelPackage;
 import org.eclipse.emf.codegen.ecore.genmodel.GenPackage;
 import org.eclipse.emf.codegen.util.ImportManager;
+import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.Monitor;
@@ -50,6 +51,7 @@ import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EModelElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EPackage.Registry;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.plugin.EcorePlugin;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -92,6 +94,8 @@ import com.google.inject.Provider;
 
 public class XcoreExporter extends ModelExporter
 {
+  public static Diagnostic RETRY = new BasicDiagnostic();
+
   @Inject
   Provider<EcoreXcoreBuilder> ecoreXcoreBuilderProvider;
 
@@ -162,11 +166,13 @@ public class XcoreExporter extends ModelExporter
   @Override
   protected Diagnostic doExport(Monitor monitor, ModelExporter.ExportData exportData) throws Exception
   {
-    for (Map.Entry<GenPackage, URI> entry : exportData.genPackageToArtifactURI.entrySet())
+    // Add natures and libraries if necessary.
+    // Because the builder needs to run to update the index, if we do add a library, we need to return early to allow the workspace modify operation to complete.
+    // After that's done, we want to retry, at which point there should be no libraries added the second time.
+    //
+    boolean retry = false;
+    for (URI xcoreLocationURI : exportData.genPackageToArtifactURI.values())
     {
-      GenPackage genPackage = entry.getKey();
-      URI xcoreLocationURI = entry.getValue();
-
       // Add the Xtext nature if it's absent.
       //
       IFile xcoreFile = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(xcoreLocationURI.toPlatformString(true)));
@@ -185,14 +191,26 @@ public class XcoreExporter extends ModelExporter
         }
         XcoreClasspathUpdater xcoreClasspathUpdater = new XcoreClasspathUpdater();
         IJavaProject xcoreJavaProject = JavaCore.create(xcoreProject);
-        xcoreClasspathUpdater.addBundle(xcoreJavaProject, "org.eclipse.emf.ecore.xcore.lib", null);
-        xcoreClasspathUpdater.addBundle(xcoreJavaProject, "org.eclipse.xtext.xbase.lib", null);
+        retry = xcoreClasspathUpdater.addBundle(xcoreJavaProject, "org.eclipse.emf.ecore.xcore.lib", null) || retry;
+        retry = xcoreClasspathUpdater.addBundle(xcoreJavaProject, "org.eclipse.xtext.xbase.lib", null) || retry;
       }
+    }
+    if (retry)
+    {
+      return RETRY;
+    }
+
+    for (Map.Entry<GenPackage, URI> entry : exportData.genPackageToArtifactURI.entrySet())
+    {
+      GenPackage genPackage = entry.getKey();
+      URI xcoreLocationURI = entry.getValue();
 
       // Create an appropriate resource set for Xcore models.
       //
       final ResourceSet resourceSet = resourceSetProvider.get();
-      resourceSet.getURIConverter().getURIMap().putAll(EcorePlugin.computePlatformURIMap(true));
+      final Map<URI, URI> uriMap = resourceSet.getURIConverter().getURIMap();
+      Registry packageRegistry = resourceSet.getPackageRegistry();
+      uriMap.putAll(EcorePlugin.computePlatformURIMap(true));
 
       // Load a clone of the GenModel in the new resource set.
       //
@@ -270,28 +288,34 @@ public class XcoreExporter extends ModelExporter
       outputResource.getContents().add(inputGenModel);
       outputResource.getContents().add(inputGenPackage.getEcorePackage());
 
-      // Put all the specialize internal GenPackages in appropriately named resources so the serialize can resolve them.
+      // Put all the specialize internal GenPackages in appropriately named resources so the serializer can resolve them.
+      // Xtext complains about duplicate resources in the resource set if we put them in the original resource set.
       //
+      ResourceSet additionalResources = resourceSetProvider.get();
       GenPackage ecoreGenPackage = inputGenModel.getEcoreGenPackage();
       if (ecoreGenPackage != null)
       {
-        Resource ecoreResource = resourceSet.createResource(URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/Ecore.genmodel", false));
+        URI ecoreResourceURI = URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/Ecore.genmodel", false);
+        packageRegistry.put(ecoreResourceURI.toString(), ecoreGenPackage.getEcorePackage());
+        Resource ecoreResource = additionalResources.createResource(ecoreResourceURI);
         ecoreResource.getContents().add(ecoreGenPackage.getGenModel());
       }
       GenPackage xmlTypeGenPackage = inputGenModel.getXMLTypeGenPackage();
       if (xmlTypeGenPackage != null)
       {
-        Resource xmlTypeResource = resourceSet.createResource(URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/XMLType.genmodel", false));
+        URI xmlTypeResourceURI = URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/XMLType.genmodel", false);
+        packageRegistry.put(xmlTypeResourceURI.toString(), xmlTypeGenPackage.getEcorePackage());
+        Resource xmlTypeResource = additionalResources.createResource(xmlTypeResourceURI);
         xmlTypeResource.getContents().add(xmlTypeGenPackage.getGenModel());
       }
       GenPackage xmlNamespaceGenPackage = inputGenModel.getXMLNamespaceGenPackage();
       if (xmlNamespaceGenPackage != null)
       {
-        Resource xmlNamespaceResource = resourceSet.createResource(URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/XMLNamespace.genmodel", false));
+        URI xmlNamespaceResourceURI = URI.createPlatformResourceURI("/org.eclipse.emf.ecore/model/XMLNamespace.genmodel", false);
+        packageRegistry.put(xmlNamespaceResourceURI.toString(), xmlNamespaceGenPackage.getEcorePackage());
+        Resource xmlNamespaceResource = additionalResources.createResource(xmlNamespaceResourceURI);
         xmlNamespaceResource.getContents().add(xmlNamespaceGenPackage.getGenModel());
       }
-
-      resourceSet.getURIConverter().getURIMap().remove(URI.createPlatformResourceURI("/org.eclipse.emf.ecore/", false));
 
       // Do the final linking step and build the map.
       //
@@ -327,17 +351,20 @@ public class XcoreExporter extends ModelExporter
               importManager.addImport(qualifiedNameValue);
             }
 
-            // We need to ensure that if we resolve to a different instance, we switch to use that so that serialization will find the right instance.
-            //
-            XGenericType xGenericType = genericTypeMap.get(eGenericType);
-            IScope scope = scopeProvider.getScope(xGenericType, XcorePackage.Literals.XGENERIC_TYPE__TYPE);
-            IEObjectDescription genClassifierDescription = scope.getSingleElement(qualifiedName);
-            if (genClassifierDescription != null)
+            if (genClassifier.eResource() != outputResource)
             {
-              EObject resolvedGenClassifier = resourceSet.getEObject(genClassifierDescription.getEObjectURI(), true);
-              if (resolvedGenClassifier != null && resolvedGenClassifier != genClassifier)
+              // We need to ensure that if we resolve to a different instance, we switch to use that so that serialization will find the right instance.
+              //
+              XGenericType xGenericType = genericTypeMap.get(eGenericType);
+              IScope scope = scopeProvider.getScope(xGenericType, XcorePackage.Literals.XGENERIC_TYPE__TYPE);
+              IEObjectDescription genClassifierDescription = scope.getSingleElement(qualifiedName);
+              if (genClassifierDescription != null)
               {
-                xGenericType.setType((GenClassifier)resolvedGenClassifier);
+                EObject resolvedGenClassifier = resourceSet.getEObject(genClassifierDescription.getEObjectURI(), true);
+                if (resolvedGenClassifier != null && resolvedGenClassifier != genClassifier)
+                {
+                  xGenericType.setType((GenClassifier)resolvedGenClassifier);
+                }
               }
             }
           }
@@ -348,7 +375,7 @@ public class XcoreExporter extends ModelExporter
           XReference xReference = (XReference)mapper.getToXcoreMapping(eReference).getXcoreElement();
           EList<GenFeature> keys = xReference.getKeys();
           GenFeature opposite = xReference.getOpposite();
-          if (opposite != null)
+          if (opposite != null && opposite.eResource() != outputResource)
           {
             IScope scope = scopeProvider.getScope(xReference, XcorePackage.Literals.XREFERENCE__OPPOSITE);
             IEObjectDescription genFeatureDescription = scope.getSingleElement(QualifiedName.create(opposite.getName()));
@@ -367,13 +394,16 @@ public class XcoreExporter extends ModelExporter
             for (ListIterator<GenFeature> k = keys.listIterator(); k.hasNext(); )
             {
               GenFeature key = k.next();
-              IEObjectDescription genFeatureDescription = scope.getSingleElement(QualifiedName.create(key.getName()));
-              if (genFeatureDescription != null)
+              if (key.eResource() != outputResource)
               {
-                EObject resolvedGenFeature = resourceSet.getEObject(genFeatureDescription.getEObjectURI(), true);
-                if (resolvedGenFeature != null)
+                IEObjectDescription genFeatureDescription = scope.getSingleElement(QualifiedName.create(key.getName()));
+                if (genFeatureDescription != null)
                 {
-                  k.set((GenFeature)resolvedGenFeature);
+                  EObject resolvedGenFeature = resourceSet.getEObject(genFeatureDescription.getEObjectURI(), true);
+                  if (resolvedGenFeature != null)
+                  {
+                    k.set((GenFeature)resolvedGenFeature);
+                  }
                 }
               }
             }
@@ -411,7 +441,6 @@ public class XcoreExporter extends ModelExporter
             {
               // Temporarily clear the mappings so that the serializer properly finds the non-normalized URIs in the index.
               //
-              Map<URI, URI> uriMap = resourceSet.getURIConverter().getURIMap();
               Map<URI, URI> copyiedURIMap = new HashMap<URI, URI>(uriMap);
               uriMap.clear();
               outputResource.save(options);

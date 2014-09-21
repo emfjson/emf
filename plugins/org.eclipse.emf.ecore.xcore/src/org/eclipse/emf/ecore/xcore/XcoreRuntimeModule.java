@@ -11,6 +11,7 @@ package org.eclipse.emf.ecore.xcore;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.eclipse.emf.ecore.xcore.conversion.XcoreQualifiedNameValueConverter;
 import org.eclipse.emf.ecore.xcore.conversion.XcoreValueConverterService;
+import org.eclipse.emf.ecore.xcore.findrefs.XcoreReferenceFinder;
 import org.eclipse.emf.ecore.xcore.formatting.XcoreFormatter;
 import org.eclipse.emf.ecore.xcore.generator.XcoreCompiler;
 import org.eclipse.emf.ecore.xcore.generator.XcoreGenerator;
@@ -21,11 +22,11 @@ import org.eclipse.emf.ecore.xcore.resource.containers.XcoreContainerManager;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreIdentifableSimpleNameProvider;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreImplicitlyImportedTypes;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreImportedNamespaceAwareScopeProvider;
+import org.eclipse.emf.ecore.xcore.scoping.XcoreImportsConfiguration;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreLogicalContainerAwareReentrantTypeResolver;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreQualifiedNameProvider;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreResourceDescriptionManager;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreResourceDescriptionStrategy;
-import org.eclipse.emf.ecore.xcore.scoping.XcoreBatchScopeProvider;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreScopeProvider;
 import org.eclipse.emf.ecore.xcore.scoping.XcoreSerializerScopeProvider;
 import org.eclipse.emf.ecore.xcore.validation.XcoreDiagnosticConverter;
@@ -34,6 +35,7 @@ import org.eclipse.emf.ecore.xcore.validation.XcoreJvmTypeReferencesValidator;
 import org.eclipse.emf.ecore.xcore.validation.XcoreResourceValidator;
 import org.eclipse.xtext.conversion.IValueConverterService;
 import org.eclipse.xtext.conversion.impl.QualifiedNameValueConverter;
+import org.eclipse.xtext.findReferences.IReferenceFinder;
 import org.eclipse.xtext.generator.IGenerator;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.parser.antlr.IReferableElementsUnloader;
@@ -53,10 +55,10 @@ import org.eclipse.xtext.validation.IResourceValidator;
 import org.eclipse.xtext.xbase.compiler.XbaseCompiler;
 import org.eclipse.xtext.xbase.featurecalls.IdentifiableSimpleNameProvider;
 import org.eclipse.xtext.xbase.formatting.IBasicFormatter;
+import org.eclipse.xtext.xbase.imports.IImportsConfiguration;
 import org.eclipse.xtext.xbase.jvmmodel.IJvmModelAssociations;
 import org.eclipse.xtext.xbase.jvmmodel.ILogicalContainerProvider;
-import org.eclipse.xtext.xbase.scoping.batch.ImplicitlyImportedTypes;
-import org.eclipse.xtext.xbase.scoping.batch.ImplicitlyImportedTypesAdapter;
+import org.eclipse.xtext.xbase.scoping.batch.ImplicitlyImportedFeatures;
 import org.eclipse.xtext.xbase.scoping.batch.XbaseBatchScopeProvider;
 import org.eclipse.xtext.xbase.typesystem.internal.DefaultReentrantTypeResolver;
 import org.eclipse.xtext.xbase.validation.JvmTypeReferencesValidator;
@@ -112,7 +114,7 @@ public class XcoreRuntimeModule extends AbstractXcoreRuntimeModule
   @Override
   public Class<? extends XbaseBatchScopeProvider> bindXbaseBatchScopeProvider()
   {
-    return XcoreBatchScopeProvider.class;
+    return XcoreScopeProvider.class;
   }
 
   @Override
@@ -183,7 +185,7 @@ public class XcoreRuntimeModule extends AbstractXcoreRuntimeModule
     return XcoreModelAssociator.class;
   }
 
-  public Class<? extends ImplicitlyImportedTypes> bindImplicitlyImportedTypes()
+  public Class<? extends ImplicitlyImportedFeatures> bindImplicitlyImportedFeatures()
   {
     return XcoreImplicitlyImportedTypes.class;
   }
@@ -192,12 +194,6 @@ public class XcoreRuntimeModule extends AbstractXcoreRuntimeModule
   public Class<? extends IResourceValidator> bindIResourceValidator()
   {
     return XcoreResourceValidator.class;
-  }
-
-  @Override
-  public Class<? extends IScopeProvider> bindIScopeProvider()
-  {
-    return XcoreScopeProvider.class;
   }
 
   public Class<? extends IBasicFormatter> bindIBasicFormatter()
@@ -212,15 +208,6 @@ public class XcoreRuntimeModule extends AbstractXcoreRuntimeModule
     return XcoreJvmTypeReferencesValidator.class;
   }
 
-  @SuppressWarnings("deprecation")
-  @SingletonBinding(eager=true)
-  @Override
-  public Class<? extends org.eclipse.xtext.xbase.scoping.featurecalls.StaticImplicitMethodsFeatureForTypeProvider.ExtensionClassNameProvider> 
-    bindStaticImplicitMethodsFeatureForTypeProvider$ExtensionClassNameProvider()
-  {
-    return ImplicitlyImportedTypesAdapter.class;
-  }
-
   public Class<? extends XbaseCompiler> bindXbaseCompiler()
   {
     return XcoreCompiler.class;
@@ -230,5 +217,15 @@ public class XcoreRuntimeModule extends AbstractXcoreRuntimeModule
   public Class<? extends DefaultReentrantTypeResolver> bindDefaultReentrantTypeResolver()
   {
     return XcoreLogicalContainerAwareReentrantTypeResolver.class;
+  }
+
+  public Class<? extends IImportsConfiguration> bindIImportsConfiguration() 
+  {
+    return XcoreImportsConfiguration.class;
+  }
+
+  public Class<? extends IReferenceFinder> bindReferenceFinder()
+  {
+    return XcoreReferenceFinder.class;
   }
 }

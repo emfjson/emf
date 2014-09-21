@@ -210,6 +210,7 @@ import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#getDecoration <em>Decoration</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#isStyleProviders <em>Style Providers</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#isCleanup <em>Cleanup</em>}</li>
+ *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#isOSGiCompatible <em>OS Gi Compatible</em>}</li>
  * </ul>
  * </p>
  *
@@ -1865,6 +1866,26 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
    */
   protected boolean cleanup = CLEANUP_EDEFAULT;
 
+  /**
+   * The default value of the '{@link #isOSGiCompatible() <em>OS Gi Compatible</em>}' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @see #isOSGiCompatible()
+   * @generated
+   * @ordered
+   */
+  protected static final boolean OS_GI_COMPATIBLE_EDEFAULT = false;
+
+  /**
+   * The cached value of the '{@link #isOSGiCompatible() <em>OS Gi Compatible</em>}' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @see #isOSGiCompatible()
+   * @generated
+   * @ordered
+   */
+  protected boolean oSGiCompatible = OS_GI_COMPATIBLE_EDEFAULT;
+
   protected boolean validateModel = false;
 
   /**
@@ -1924,7 +1945,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
 
     // A single set of special packages should be cached by the main GenModel.
     //
-    if (!isMainGenModel() &&
+    boolean isMainGenModel = isMainGenModel();
+    if (!isMainGenModel &&
         (ePackage == EcorePackage.eINSTANCE || ePackage == XMLTypePackage.eINSTANCE || ePackage == XMLNamespacePackage.eINSTANCE))
     {
       result = getMainGenModel().findGenPackage(ePackage);
@@ -1981,6 +2003,14 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
       {
         GenPackage genPackage = pIter.next();
         result = findGenPackageHelper(genPackage, ePackage);
+      }
+
+      // With Xcore the GenModel might be in a state where the usedGenPackages aren't populated yet for the dependency
+      // so also try to look up the GenPackage in the main GenModel.
+      //
+      if (result == null && !isMainGenModel)
+      {
+        result = getMainGenModel().findGenPackage(ePackage);
       }
     }
 
@@ -6578,6 +6608,29 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
    * <!-- end-user-doc -->
    * @generated
    */
+  public boolean isOSGiCompatible()
+  {
+    return oSGiCompatible;
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
+  public void setOSGiCompatible(boolean newOSGiCompatible)
+  {
+    boolean oldOSGiCompatible = oSGiCompatible;
+    oSGiCompatible = newOSGiCompatible;
+    if (eNotificationRequired())
+      eNotify(new ENotificationImpl(this, Notification.SET, GenModelPackage.GEN_MODEL__OS_GI_COMPATIBLE, oldOSGiCompatible, oSGiCompatible));
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
   @SuppressWarnings("unchecked")
   @Override
   public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID, NotificationChain msgs)
@@ -6786,6 +6839,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
         return isStyleProviders();
       case GenModelPackage.GEN_MODEL__CLEANUP:
         return isCleanup();
+      case GenModelPackage.GEN_MODEL__OS_GI_COMPATIBLE:
+        return isOSGiCompatible();
     }
     return super.eGet(featureID, resolve, coreType);
   }
@@ -7065,6 +7120,9 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
       case GenModelPackage.GEN_MODEL__CLEANUP:
         setCleanup((Boolean)newValue);
         return;
+      case GenModelPackage.GEN_MODEL__OS_GI_COMPATIBLE:
+        setOSGiCompatible((Boolean)newValue);
+        return;
     }
     super.eSet(featureID, newValue);
   }
@@ -7334,6 +7392,9 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
       case GenModelPackage.GEN_MODEL__CLEANUP:
         setCleanup(CLEANUP_EDEFAULT);
         return;
+      case GenModelPackage.GEN_MODEL__OS_GI_COMPATIBLE:
+        setOSGiCompatible(OS_GI_COMPATIBLE_EDEFAULT);
+        return;
     }
     super.eUnset(featureID);
   }
@@ -7518,6 +7579,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
         return styleProviders != STYLE_PROVIDERS_EDEFAULT;
       case GenModelPackage.GEN_MODEL__CLEANUP:
         return cleanup != CLEANUP_EDEFAULT;
+      case GenModelPackage.GEN_MODEL__OS_GI_COMPATIBLE:
+        return oSGiCompatible != OS_GI_COMPATIBLE_EDEFAULT;
     }
     return super.eIsSet(featureID);
   }
@@ -7693,6 +7756,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
     result.append(styleProviders);
     result.append(", cleanup: ");
     result.append(cleanup);
+    result.append(", oSGiCompatible: ");
+    result.append(oSGiCompatible);
     result.append(')');
     return result.toString();
   }
@@ -7795,7 +7860,7 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
 
   public String getEditPluginID()
   {
-    if (sameModelEditProject())
+    if (sameModelEditProject() && !isBlank(getModelDirectory()))
     {
       return getModelPluginID();
     }
@@ -8705,13 +8770,23 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
 
     if (!sameEditEditorProject())
     {
+      boolean added = false;
       for (GenPackage genPackage : getGenPackages())
       {
         GenModel genModel = genPackage.getGenModel();
         if (genModel.hasEditSupport())
         {
+          added = true;
           result.add(genModel.getEditPluginID());
         }
+      }
+
+      // Assume there is at least one model contributing item providers.
+      // E.g., when generating an RCP editor for a model generated by another GenModel.
+      //
+      if (!added)
+      {
+        result.add(getGenPackages().get(0).getGenModel().getEditPluginID());
       }
     }
     else
@@ -9010,6 +9085,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
 
     setDecoration(oldGenModelVersion.getDecoration());
     setStyleProviders(oldGenModelVersion.isStyleProviders());
+    
+    setOSGiCompatible(oldGenModelVersion.isOSGiCompatible());
   }
 
   public boolean reconcile()
@@ -9124,9 +9201,9 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
 
   protected void getMissingPackagesHelper(List<EPackage> ePackages, List<GenPackage> genPackages)
   {
-    for (GenPackage genPackage : genPackages)
+    for (int i = 0; i < genPackages.size(); ++i)
     {
-      EPackage ePackage = genPackage.getEcorePackage();
+      EPackage ePackage = genPackages.get(i).getEcorePackage();
       if (ePackage != null)
       {
         for (Iterator<EObject> j = ePackage.eAllContents(); j.hasNext();)
@@ -10117,9 +10194,13 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
             {
               return GenJDKLevel.JDK60_LITERAL;
             }
-            else
+            else if ("1.7".equals(complianceLevel))
             {
               return GenJDKLevel.JDK70_LITERAL;
+            }
+            else
+            {
+              return GenJDKLevel.JDK80_LITERAL;
             }
           }
         }

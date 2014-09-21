@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,6 +84,8 @@ import org.eclipse.emf.ecore.util.EcoreSwitch;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.util.ExtendedMetaData;
 import org.eclipse.emf.ecore.util.InternalEList;
+import org.eclipse.emf.ecore.xml.namespace.XMLNamespacePackage;
+import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
 import org.osgi.framework.Bundle;
 
 
@@ -122,6 +125,7 @@ import org.osgi.framework.Bundle;
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl#getGenClasses <em>Gen Classes</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl#getNestedGenPackages <em>Nested Gen Packages</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl#getGenClassifiers <em>Gen Classifiers</em>}</li>
+ *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenPackageImpl#getPublicationLocation <em>Publication Location</em>}</li>
  * </ul>
  * </p>
  *
@@ -620,6 +624,26 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
    * @ordered
    */
   protected EList<GenPackage> nestedGenPackages;
+
+  /**
+   * The default value of the '{@link #getPublicationLocation() <em>Publication Location</em>}' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @see #getPublicationLocation()
+   * @generated
+   * @ordered
+   */
+  protected static final String PUBLICATION_LOCATION_EDEFAULT = null;
+
+  /**
+   * The cached value of the '{@link #getPublicationLocation() <em>Publication Location</em>}' attribute.
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @see #getPublicationLocation()
+   * @generated
+   * @ordered
+   */
+  protected String publicationLocation = PUBLICATION_LOCATION_EDEFAULT;
 
   /**
    * <!-- begin-user-doc -->
@@ -1168,6 +1192,11 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
     return COMMA_SEPARATOR_PATTERN.matcher(fileExtensions).replaceAll(",");
   }
 
+  public List<String> getFileExtensionList()
+  {
+    return Arrays.asList(getFileExtensions().split(","));
+  }
+
   /**
    * <!-- begin-user-doc -->
    * <!-- end-user-doc -->
@@ -1387,6 +1416,29 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
    * <!-- end-user-doc -->
    * @generated
    */
+  public String getPublicationLocation()
+  {
+    return publicationLocation;
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
+  public void setPublicationLocation(String newPublicationLocation)
+  {
+    String oldPublicationLocation = publicationLocation;
+    publicationLocation = newPublicationLocation;
+    if (eNotificationRequired())
+      eNotify(new ENotificationImpl(this, Notification.SET, GenModelPackage.GEN_PACKAGE__PUBLICATION_LOCATION, oldPublicationLocation, publicationLocation));
+  }
+
+  /**
+   * <!-- begin-user-doc -->
+   * <!-- end-user-doc -->
+   * @generated
+   */
   @Override
   public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID, NotificationChain msgs)
   {
@@ -1509,6 +1561,8 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
         return getNestedGenPackages();
       case GenModelPackage.GEN_PACKAGE__GEN_CLASSIFIERS:
         return getGenClassifiers();
+      case GenModelPackage.GEN_PACKAGE__PUBLICATION_LOCATION:
+        return getPublicationLocation();
     }
     return super.eGet(featureID, resolve, coreType);
   }
@@ -1612,6 +1666,9 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
         getNestedGenPackages().clear();
         getNestedGenPackages().addAll((Collection<? extends GenPackage>)newValue);
         return;
+      case GenModelPackage.GEN_PACKAGE__PUBLICATION_LOCATION:
+        setPublicationLocation((String)newValue);
+        return;
     }
     super.eSet(featureID, newValue);
   }
@@ -1710,6 +1767,9 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
       case GenModelPackage.GEN_PACKAGE__NESTED_GEN_PACKAGES:
         getNestedGenPackages().clear();
         return;
+      case GenModelPackage.GEN_PACKAGE__PUBLICATION_LOCATION:
+        setPublicationLocation(PUBLICATION_LOCATION_EDEFAULT);
+        return;
     }
     super.eUnset(featureID);
   }
@@ -1782,6 +1842,8 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
         return nestedGenPackages != null && !nestedGenPackages.isEmpty();
       case GenModelPackage.GEN_PACKAGE__GEN_CLASSIFIERS:
         return !getGenClassifiers().isEmpty();
+      case GenModelPackage.GEN_PACKAGE__PUBLICATION_LOCATION:
+        return PUBLICATION_LOCATION_EDEFAULT == null ? publicationLocation != null : !PUBLICATION_LOCATION_EDEFAULT.equals(publicationLocation);
     }
     return super.eIsSet(featureID);
   }
@@ -1841,6 +1903,8 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
     result.append(contentTypeIdentifier);
     result.append(", fileExtensions: ");
     result.append(fileExtensions);
+    result.append(", publicationLocation: ");
+    result.append(publicationLocation);
     result.append(')');
     return result.toString();
   }
@@ -2085,6 +2149,12 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
   public String getQualifiedExampleClassName()
   {
     return getTestsPackageName() + "." + getExampleClassName();
+  }
+
+  public String getSchemaLocation()
+  {
+    String schemaLocation = EcoreUtil.getAnnotation(getEcorePackage(), EcorePackage.eNS_URI, "schemaLocation");
+    return schemaLocation == null ? "eNS_URI" : Literals.toStringLiteral(schemaLocation, getGenModel());
   }
 
   protected static final boolean NO_CONSTRAINTS = "true".equals(System.getProperty("EMF_NO_CONSTRAINTS")); 
@@ -4040,6 +4110,8 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
     }
 
     reconcileGenAnnotations(oldGenPackageVersion);
+
+    setPublicationLocation(oldGenPackageVersion.getPublicationLocation());
   }
 
   public boolean reconcile()
@@ -4381,31 +4453,47 @@ public class GenPackageImpl extends GenBaseImpl implements GenPackage
 
   protected static boolean hasExtendedMetaData(EPackage ePackage)
   {
-    List<EPackage> ePackages = new UniqueEList<EPackage>();
+    List<EPackage> ePackages = new UniqueEList.FastCompare<EPackage>();
     ePackages.add(ePackage);
     for (int i = 0; i < ePackages.size(); ++i)
     {
-      for (TreeIterator<EObject> j = ePackages.get(i).eAllContents(); j.hasNext(); )
+      String nsURI = ePackage.getNsURI();
+      if (!EcorePackage.eNS_URI.equals(nsURI) && !XMLNamespacePackage.eNS_URI.equals(nsURI))
       {
-        EObject eObject = j.next();
-        if (eObject instanceof EPackage || eObject instanceof EDataType)
+        if (XMLTypePackage.eNS_URI.equals(nsURI))
         {
-          j.prune();
+          return true;
         }
-        else if (eObject instanceof EAnnotation)
+
+        if (ePackage.getEAnnotation(ExtendedMetaData.ANNOTATION_URI) != null)
         {
-          EAnnotation eAnnotation = (EAnnotation)eObject;
-          String source = eAnnotation.getSource();
-          if (ExtendedMetaData.ANNOTATION_URI.equals(source))
-          {
-            return true;
-          }
+          return true;
         }
-        for (EObject eCrossReference : eObject.eCrossReferences())
+
+        for (EClassifier eClassifier : ePackage.getEClassifiers())
         {
-          if (eCrossReference instanceof EClass)
+          if (eClassifier instanceof EClass)
           {
-            ePackages.add(((EClassifier)eCrossReference).getEPackage());
+            EClass eClass = (EClass)eClassifier;
+
+            for (EStructuralFeature eStructuralFeature : eClass.getEStructuralFeatures())
+            {
+              if (eStructuralFeature.getEAnnotation(ExtendedMetaData.ANNOTATION_URI) != null)
+              {
+                return true;
+              }
+
+              EClassifier eType = eStructuralFeature.getEType();
+              if (eType instanceof EClass)
+              {
+                ePackages.add(((EClass)eType).getEPackage());
+              }
+            }
+
+            for (EClass eSuperType : eClass.getESuperTypes())
+            {
+              ePackages.add(eSuperType.getEPackage());
+            }
           }
         }
       }

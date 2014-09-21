@@ -12,10 +12,10 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.util.EcoreValidator;
 import org.eclipse.emf.ecore.xcore.XcoreInjectorProvider;
+import org.eclipse.emf.test.ecore.xcore.legacy_xpect_runner.InjectParameter;
+import org.eclipse.emf.test.ecore.xcore.legacy_xpect_runner.ResourceURIs;
+import org.eclipse.emf.test.ecore.xcore.legacy_xpect_runner.XpectLines;
 import org.eclipse.xtext.junit4.InjectWith;
-import org.eclipse.xtext.junit4.parameterized.InjectParameter;
-import org.eclipse.xtext.junit4.parameterized.ResourceURIs;
-import org.eclipse.xtext.junit4.parameterized.XpectLines;
 import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.validation.CheckMode;
@@ -53,7 +53,6 @@ import com.google.inject.Inject;
  * {@link EcoreValidator#WELL_FORMED_SOURCE_URI},
  * 
  */
-@SuppressWarnings("restriction")
 @InjectWith(XcoreInjectorProvider.class)
 @RunWith(XcoreParameterizedTestRunner.class)
 @ResourceURIs(baseDir = "src/org/eclipse/emf/test/ecore/xcore/validation", fileExtensions = "xcore_test")
