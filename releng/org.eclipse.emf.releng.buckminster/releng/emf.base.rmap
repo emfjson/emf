@@ -11,7 +11,7 @@
 
 	<locator pattern="^org\.eclipse\.datatools(?:\..+)?$" searchPathRef="datatools" />
 	<locator pattern="^com\.google\.(?:appengine|gdt|gwt)\.eclipse(?:\..+)?$" searchPathRef="google" />
-	<locator pattern="^org\.junit(?:\..+)?$" searchPathRef="orbit" />
+	<locator pattern="^org\.junit(?:\..+)?$" searchPathRef="orbit" failOnError="false" />
 	<locator pattern="^org\.junit4(?:\..+)?$" searchPathRef="junit4" />
 	<locator pattern="^org\.hamcrest(?:\..+)?$" searchPathRef="orbit" />
 	<locator searchPathRef="platform" />
@@ -196,21 +196,21 @@
 		<provider componentTypes="eclipse.feature,osgi.bundle" readerType="p2" source="false" mutable="false"
 			resolutionFilter="(&amp;(resolve.target.platform=true)(eclipse.target.platform=Latest)(!(|(build.type=S)(build.type=R))))"
 		>
-			<uri format="{0}/eclipse/updates/4.4-I-builds">
+			<uri format="{0}/eclipse/updates/4.5-I-builds">
 				<bc:propertyRef key="eclipse.download" />
 			</uri>
 		</provider>
 		<provider componentTypes="eclipse.feature,osgi.bundle" readerType="p2" source="false" mutable="false"
 			resolutionFilter="(&amp;(resolve.target.platform=true)(eclipse.target.platform=Latest)(build.type=S))"
 		>
-			<uri format="{0}/eclipse/updates/4.4milestones">
+			<uri format="{0}/eclipse/updates/4.5milestones">
 				<bc:propertyRef key="eclipse.download" />
 			</uri>
 		</provider>
 		<provider componentTypes="eclipse.feature,osgi.bundle" readerType="p2" source="false" mutable="false"
 			resolutionFilter="(&amp;(resolve.target.platform=true)(eclipse.target.platform=Latest)(build.type=R))"
 		>
-			<uri format="{0}/eclipse/updates/4.4">
+			<uri format="{0}/eclipse/updates/4.5milestones">
 				<bc:propertyRef key="eclipse.download" />
 			</uri>
 		</provider>
@@ -225,7 +225,7 @@
 	<property key="eclipse.download" value="http://download.eclipse.org" />
 	<property key="orbit.repository" value="http://download.eclipse.org/modeling/tmf/xtext/updates/orbit/" />
 	<property key="junit4.repository" value="${eclipse.download}/eclipse/updates/3.8" />
-	<property key="google.web.toolkit.repository" value="http://dl.google.com/eclipse/plugin/3.7" />
+	<property key="google.web.toolkit.repository" value="https://dl.google.com/eclipse/plugin/4.3" />
 
 	<property key="resolve.target.platform" value="true" />
 	<property key="build.type" value="I" />

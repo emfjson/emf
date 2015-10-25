@@ -29,10 +29,10 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenTypeParameterImpl#getEcoreTypeParameter <em>Ecore Type Parameter</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
@@ -181,7 +181,8 @@ public class GenTypeParameterImpl extends GenBaseImpl implements GenTypeParamete
   @Override
   public String getName()
   {
-    return getEcoreTypeParameter().getName();
+    ETypeParameter ecoreTypeParameter = getEcoreTypeParameter();
+	return ecoreTypeParameter == null || ecoreTypeParameter.getName() == null ? "" : ecoreTypeParameter.getName();
   }
 
   public void initialize(ETypeParameter eTypeParameter)

@@ -48,6 +48,7 @@ package <%=genPackage.getClassPackageName()%>;
 <%if (!genClass.getGenFeatures().isEmpty()) {%>
  * <p>
  * The following features are supported:
+ * </p>
  * <ul>
 <%for (GenFeature genFeature : genClass.getGenFeatures()) {%>
   <%if (!genFeature.isSuppressedGetVisibility()) {%>
@@ -55,7 +56,6 @@ package <%=genPackage.getClassPackageName()%>;
   <%}%>
 <%}%>
  * </ul>
- * </p>
 <%}%>
  *
 <%if (!genModel.isSuppressEMFMetaData()) {%>
@@ -79,16 +79,16 @@ package <%=genPackage.getClassPackageName()%>;
  * <!-- begin-user-doc -->
  * An implementation of the model object '<em><b><%=genClass.getFormattedName()%></b></em>'.
  * <!-- end-user-doc -->
- * <p>
 <%if (!genClass.getImplementedGenFeatures().isEmpty()) {%>
+ * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
 <%for (GenFeature genFeature : genClass.getImplementedGenFeatures()) {%>
  *   <li>{@link <%=genClass.getQualifiedClassName()%>#<%=genFeature.getGetAccessor()%> <em><%=genFeature.getFormattedName()%></em>}</li>
 <%}%>
  * </ul>
 <%}%>
- * </p>
  *
  * @generated
  */
@@ -2273,8 +2273,8 @@ if (index != -1) { head = typeName.substring(0, index); tail = typeName.substrin
 	{
 		switch (operationID<%=negativeOperationOffsetCorrection%>)
 		{
-<%for (GenOperation genOperation : (genModel.isMinimalReflectiveMethods() ? genClass.getImplementedGenOperations() : genClass.getAllGenOperations())) { List<GenParameter> genParameters = genOperation.getGenParameters(); int size = genParameters.size();  boolean hasCheckedException = genOperation.hasCheckedException(); String indent = hasCheckedException ? "\t" : "";%>
-			case <%=genClass.getQualifiedOperationID(genOperation)%>:
+<%for (GenOperation genOperation : (genModel.isMinimalReflectiveMethods() ? genClass.getImplementedGenOperations() : genClass.getAllGenOperations())) { List<GenParameter> genParameters = genOperation.getGenParameters(); int size = genParameters.size();  boolean hasCheckedException = genOperation.hasCheckedException(); String indent = hasCheckedException ? "\t" : ""; GenOperation overrideGenOperation = genClass.getOverrideGenOperation(genOperation);%>
+			case <%=genClass.getQualifiedOperationID(overrideGenOperation != null ? overrideGenOperation : genOperation)%>:
   <%if (hasCheckedException) {%>
 				try
 				{

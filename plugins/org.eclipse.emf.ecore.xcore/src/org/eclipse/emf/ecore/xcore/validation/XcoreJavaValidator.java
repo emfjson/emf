@@ -193,6 +193,16 @@ public class XcoreJavaValidator extends AbstractXcoreJavaValidator
             break;
           }
         }
+
+        while (simpleName.contains("."))
+        {
+          simpleName = simpleName.substring(0, simpleName.lastIndexOf('.'));
+          if (importedNames.containsKey(simpleName))
+          {
+            imports.remove(importedNames.remove(simpleName));
+            break;
+          }
+        }
       }
     }
 
@@ -231,7 +241,7 @@ public class XcoreJavaValidator extends AbstractXcoreJavaValidator
         if (typeReferences.findDeclaredType(XcoreIterableExtensions.class, xPackage) == null)
         {
           error
-            ("The required library 'org.eclipse.emf.xcore.lib' isn't on the classpath", 
+            ("The required library 'org.eclipse.emf.ecore.xcore.lib' isn't on the classpath", 
              xPackage, 
              XcorePackage.Literals.XNAMED_ELEMENT__NAME, 
              XcoreIssueCodes.XCORE_LIB_NOT_ON_CLASSPATH);

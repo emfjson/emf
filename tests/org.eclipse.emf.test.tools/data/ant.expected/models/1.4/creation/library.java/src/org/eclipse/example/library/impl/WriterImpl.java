@@ -29,11 +29,11 @@ import org.eclipse.example.library.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.example.library.impl.WriterImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.example.library.impl.WriterImpl#getBooks <em>Books</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

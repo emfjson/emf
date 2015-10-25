@@ -911,7 +911,7 @@ public class EcoreUtil
   }
 
   /**
-   * Returns whether the second object is directly or indirectly contained by the first object,
+   * Returns whether the second object is the same as the first object, or is directly or indirectly contained by the first object,
    * i.e., whether the second object is in the {@link EObject#eContents content tree} of the first.
    * Container proxies are not resolved.
    * @param ancestorEObject the ancestor object in question.
@@ -4681,19 +4681,22 @@ public class EcoreUtil
    */
   public static List<String> getConversionDelegates(EPackage ePackage)
   {
-    EAnnotation eAnnotation = ePackage.getEAnnotation(EcorePackage.eNS_URI);
-    if (eAnnotation != null)
+    if (ePackage != null)
     {
-      String eDataTypeDelegates = eAnnotation.getDetails().get("conversionDelegates");
-      if (eDataTypeDelegates != null)
+      EAnnotation eAnnotation = ePackage.getEAnnotation(EcorePackage.eNS_URI);
+      if (eAnnotation != null)
       {
-        List<String> result = new ArrayList<String>();
-        for (StringTokenizer stringTokenizer = new StringTokenizer(eDataTypeDelegates); stringTokenizer.hasMoreTokens();)
+        String eDataTypeDelegates = eAnnotation.getDetails().get("conversionDelegates");
+        if (eDataTypeDelegates != null)
         {
-          String eDataTypeDelegate = stringTokenizer.nextToken();
-          result.add(eDataTypeDelegate);
+          List<String> result = new ArrayList<String>();
+          for (StringTokenizer stringTokenizer = new StringTokenizer(eDataTypeDelegates); stringTokenizer.hasMoreTokens();)
+          {
+            String eDataTypeDelegate = stringTokenizer.nextToken();
+            result.add(eDataTypeDelegate);
+          }
+          return result;
         }
-        return result;
       }
     }
     return Collections.emptyList();

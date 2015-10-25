@@ -62,6 +62,7 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.emf.ecore.impl.EClassImpl#isAbstract <em>Abstract</em>}</li>
  *   <li>{@link org.eclipse.emf.ecore.impl.EClassImpl#isInterface <em>Interface</em>}</li>
@@ -80,7 +81,6 @@ import org.eclipse.emf.ecore.util.InternalEList;
  *   <li>{@link org.eclipse.emf.ecore.impl.EClassImpl#getEGenericSuperTypes <em>EGeneric Super Types</em>}</li>
  *   <li>{@link org.eclipse.emf.ecore.impl.EClassImpl#getEAllGenericSuperTypes <em>EAll Generic Super Types</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
@@ -806,8 +806,8 @@ public class EClassImpl extends EClassifierImpl implements EClass, ESuperAdapter
       {
         private static final long serialVersionUID = 1L;
 
-        protected EStructuralFeature [] containments;
-        protected EStructuralFeature [] crossReferences;
+        protected EStructuralFeature [] containments = NO_EALL_STRUCTURE_FEATURES_DATA;
+        protected EStructuralFeature [] crossReferences = NO_EALL_STRUCTURE_FEATURES_DATA;
 
         public EAllStructuralFeaturesList(BasicEList<EStructuralFeature> eAllStructuralFeatures)
         {
@@ -869,7 +869,7 @@ public class EClassImpl extends EClassifierImpl implements EClass, ESuperAdapter
 
         public EStructuralFeature [] containments()
         {
-          if (containments == null)
+          if (containments == NO_EALL_STRUCTURE_FEATURES_DATA)
           {
             init();
           }
@@ -878,7 +878,7 @@ public class EClassImpl extends EClassifierImpl implements EClass, ESuperAdapter
 
         public EStructuralFeature [] crossReferences()
         {
-          if (crossReferences == null)
+          if (crossReferences == NO_EALL_STRUCTURE_FEATURES_DATA)
           {
             init();
           }

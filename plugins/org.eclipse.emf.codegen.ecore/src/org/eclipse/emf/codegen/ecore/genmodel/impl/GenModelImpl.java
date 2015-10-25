@@ -124,6 +124,7 @@ import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#getCopyrightText <em>Copyright Text</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#getModelDirectory <em>Model Directory</em>}</li>
@@ -212,7 +213,6 @@ import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#isCleanup <em>Cleanup</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenModelImpl#isOSGiCompatible <em>OS Gi Compatible</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
@@ -2079,7 +2079,8 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
     {
       for (GenEnum genEnum : genPackage.getGenEnums())
       {
-        if (eEnum.getName().equals(genEnum.getEcoreEnum().getName())) //FB TBD different objects for ecore model!
+        String name = eEnum.getName();
+        if (name != null && name.equals(genEnum.getEcoreEnum().getName())) //FB TBD different objects for ecore model!
         {
           eClassifierToGenClassifierMap.put(eEnum, genEnum);
           return genEnum;
@@ -10123,7 +10124,7 @@ public class GenModelImpl extends GenBaseImpl implements GenModel
         try
         {
           IWorkspace workspace = ResourcesPlugin.getWorkspace();
-          IProject project = workspace.getRoot().getProject(uri.segment(1));
+          IProject project = workspace.getRoot().getProject(URI.decode(uri.segment(1)));
           if (project.exists())
           {
             @SuppressWarnings("deprecation")

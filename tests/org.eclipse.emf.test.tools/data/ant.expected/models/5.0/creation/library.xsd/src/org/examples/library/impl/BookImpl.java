@@ -23,13 +23,13 @@ import org.examples.library.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.impl.BookImpl#getTitle <em>Title</em>}</li>
  *   <li>{@link org.examples.library.impl.BookImpl#getPages <em>Pages</em>}</li>
  *   <li>{@link org.examples.library.impl.BookImpl#getCategory <em>Category</em>}</li>
  *   <li>{@link org.examples.library.impl.BookImpl#getAuthor <em>Author</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

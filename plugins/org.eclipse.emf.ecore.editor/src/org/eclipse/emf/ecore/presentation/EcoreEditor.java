@@ -530,7 +530,7 @@ public class EcoreEditor
                     {
                       if ((delta.getFlags() & IResourceDelta.MARKERS) != 0)
                       {
-                        DiagnosticDecorator.DiagnosticAdapter.update(resource, markerHelper.getMarkerDiagnostics(resource, (IFile)delta.getResource()));
+                        DiagnosticDecorator.DiagnosticAdapter.update(resource, markerHelper.getMarkerDiagnostics(resource, (IFile)delta.getResource(), false));
                       }
                       if ((delta.getFlags() & IResourceDelta.CONTENT) != 0)
                       {
@@ -1151,7 +1151,7 @@ public class EcoreEditor
    */
   public void createModelGen()
   {
-    URI resourceURI = EditUIUtil.getURI(getEditorInput());
+    URI resourceURI = EditUIUtil.getURI(getEditorInput(), editingDomain.getResourceSet().getURIConverter());
     Exception exception = null;
     Resource resource = null;
     try
@@ -1284,11 +1284,12 @@ public class EcoreEditor
    */
   public Diagnostic analyzeResourceProblems(Resource resource, Exception exception) 
   {
-    if (!resource.getErrors().isEmpty() || !resource.getWarnings().isEmpty())
+    boolean hasErrors = !resource.getErrors().isEmpty();
+    if (hasErrors || !resource.getWarnings().isEmpty())
     {
       BasicDiagnostic basicDiagnostic =
         new BasicDiagnostic
-          (Diagnostic.ERROR,
+          (hasErrors ? Diagnostic.ERROR : Diagnostic.WARNING,
            "org.eclipse.emf.ecore.editor",
            0,
            getString("_UI_CreateModelError_message", resource.getURI()),
@@ -1451,7 +1452,7 @@ public class EcoreEditor
    * <!-- end-user-doc -->
    * @generated NOT
    */
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public Object getAdapter(Class key)
   {
@@ -1776,6 +1777,8 @@ public class EcoreEditor
         }
         else
         {
+          // Ensure that all proxies are resolved before changing the containing resource implementation.
+          EcoreUtil.resolveAll(currentResource);
           Resource newResource = resourceSet.createResource(newURI);
           newResource.getContents().addAll(currentResource.getContents());
           resourceSet.getResources().remove(0);
@@ -1887,13 +1890,13 @@ public class EcoreEditor
    * Calling this result will notify the listeners.
    * <!-- begin-user-doc -->
    * <!-- end-user-doc -->
-   * @generated
+   * @generated NOT
    */
   public void setSelection(ISelection selection)
   {
     editorSelection = selection;
 
-    for (ISelectionChangedListener listener : selectionChangedListeners)
+    for (ISelectionChangedListener listener : new ArrayList<ISelectionChangedListener>(selectionChangedListeners))
     {
       listener.selectionChanged(new SelectionChangedEvent(this, selection));
     }

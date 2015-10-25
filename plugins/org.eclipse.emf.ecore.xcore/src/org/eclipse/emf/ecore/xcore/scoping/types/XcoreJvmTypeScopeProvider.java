@@ -6,8 +6,8 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.xcore.XImportDirective;
 import org.eclipse.emf.ecore.xcore.XPackage;
+import org.eclipse.emf.ecore.xcore.XcorePackage;
 import org.eclipse.xtext.common.types.JvmDeclaredType;
 import org.eclipse.xtext.common.types.JvmType;
 import org.eclipse.xtext.common.types.access.IJvmTypeProvider;
@@ -49,13 +49,13 @@ public class XcoreJvmTypeScopeProvider extends XImportSectionNamespaceScopeProvi
   @Override
   public IScope getScope(final EObject context, EReference reference)
   {
-    if (context instanceof XImportDirective)
+    final Resource resource = context.eResource();
+    if (reference == XcorePackage.Literals.XIMPORT_DIRECTIVE__IMPORTED_OBJECT)
     {
-      return cache.get("import.type.scope", context.eResource(), new Provider<IScope>()
+      return cache.get("import.type.scope", resource, new Provider<IScope>()
       {
         public IScope get()
         {
-          Resource resource = context.eResource();
           IJvmTypeProvider typeProvider = typeScopeProvider.getTypeProvider(resource.getResourceSet());
           return typeScopeProvider.createTypeScope(typeProvider, null);
         }
@@ -63,16 +63,16 @@ public class XcoreJvmTypeScopeProvider extends XImportSectionNamespaceScopeProvi
       });
     }
 
-    final XPackage xPackage = (XPackage) context;
-    return cache.get("type.scope", context.eResource(), new Provider<IScope>()
+    return cache.get("type.scope", resource, new Provider<IScope>()
     {
       public IScope get()
       {
-        IJvmTypeProvider typeProvider = typeScopeProvider.getTypeProvider(xPackage.eResource().getResourceSet());
+        final XPackage xPackage = (XPackage) resource.getContents().get(0);
+        IJvmTypeProvider typeProvider = typeScopeProvider.getTypeProvider(resource.getResourceSet());
         AbstractTypeScope typeScope = typeScopeProvider.createTypeScope(typeProvider, null);
         AbstractXcoreScope rootTypeScope = getRootTypeScope(xPackage, typeScope);
         AbstractXcoreScope importScope = getImportScope(xPackage, rootTypeScope, typeScope);
-        AbstractXcoreScope localTypes = getResourceTypeScope(xPackage.eResource(), xPackage.getName(), importScope);
+        AbstractXcoreScope localTypes = getResourceTypeScope(resource, xPackage.getName(), importScope);
         AbstractXcoreScope primitiveAware = new PrimitiveAwareScope(localTypes, typeScope);
         AbstractXcoreScope caching = new CachingTypeScope(primitiveAware);
         return caching;

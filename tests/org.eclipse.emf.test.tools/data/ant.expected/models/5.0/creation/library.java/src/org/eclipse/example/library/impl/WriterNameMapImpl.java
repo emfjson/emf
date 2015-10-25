@@ -24,11 +24,11 @@ import org.eclipse.example.library.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.example.library.impl.WriterNameMapImpl#getTypedKey <em>Key</em>}</li>
  *   <li>{@link org.eclipse.example.library.impl.WriterNameMapImpl#getTypedValue <em>Value</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

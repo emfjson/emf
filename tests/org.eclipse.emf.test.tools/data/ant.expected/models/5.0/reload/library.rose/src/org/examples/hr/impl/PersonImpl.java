@@ -31,11 +31,11 @@ import org.examples.library.LibraryPackage;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.hr.impl.PersonImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.examples.hr.impl.PersonImpl#getLibrary <em>Library</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

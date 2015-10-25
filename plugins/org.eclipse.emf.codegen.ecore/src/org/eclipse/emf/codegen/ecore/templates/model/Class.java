@@ -31,12 +31,12 @@ public class Class
   protected final String TEXT_13 = NL + " *" + NL + " * <!-- begin-model-doc -->" + NL + " * ";
   protected final String TEXT_14 = NL + " * <!-- end-model-doc -->";
   protected final String TEXT_15 = NL + " *";
-  protected final String TEXT_16 = NL + " * <p>" + NL + " * The following features are supported:" + NL + " * <ul>";
+  protected final String TEXT_16 = NL + " * <p>" + NL + " * The following features are supported:" + NL + " * </p>" + NL + " * <ul>";
   protected final String TEXT_17 = NL + " *   <li>{@link ";
   protected final String TEXT_18 = "#";
   protected final String TEXT_19 = " <em>";
   protected final String TEXT_20 = "</em>}</li>";
-  protected final String TEXT_21 = NL + " * </ul>" + NL + " * </p>";
+  protected final String TEXT_21 = NL + " * </ul>";
   protected final String TEXT_22 = NL + " *";
   protected final String TEXT_23 = NL + " * @see ";
   protected final String TEXT_24 = "#get";
@@ -47,14 +47,14 @@ public class Class
   protected final String TEXT_29 = NL + " * @extends ";
   protected final String TEXT_30 = NL + " * @generated" + NL + " */";
   protected final String TEXT_31 = NL + "/**" + NL + " * <!-- begin-user-doc -->" + NL + " * An implementation of the model object '<em><b>";
-  protected final String TEXT_32 = "</b></em>'." + NL + " * <!-- end-user-doc -->" + NL + " * <p>";
-  protected final String TEXT_33 = NL + " * The following features are implemented:" + NL + " * <ul>";
+  protected final String TEXT_32 = "</b></em>'." + NL + " * <!-- end-user-doc -->";
+  protected final String TEXT_33 = NL + " * <p>" + NL + " * The following features are implemented:" + NL + " * </p>" + NL + " * <ul>";
   protected final String TEXT_34 = NL + " *   <li>{@link ";
   protected final String TEXT_35 = "#";
   protected final String TEXT_36 = " <em>";
   protected final String TEXT_37 = "</em>}</li>";
   protected final String TEXT_38 = NL + " * </ul>";
-  protected final String TEXT_39 = NL + " * </p>" + NL + " *" + NL + " * @generated" + NL + " */";
+  protected final String TEXT_39 = NL + " *" + NL + " * @generated" + NL + " */";
   protected final String TEXT_40 = NL + "public";
   protected final String TEXT_41 = " abstract";
   protected final String TEXT_42 = " class ";
@@ -5889,9 +5889,9 @@ if (index != -1) { head = typeName.substring(0, index); tail = typeName.substrin
     stringBuffer.append(TEXT_1714);
     stringBuffer.append(negativeOperationOffsetCorrection);
     stringBuffer.append(TEXT_1715);
-    for (GenOperation genOperation : (genModel.isMinimalReflectiveMethods() ? genClass.getImplementedGenOperations() : genClass.getAllGenOperations())) { List<GenParameter> genParameters = genOperation.getGenParameters(); int size = genParameters.size();  boolean hasCheckedException = genOperation.hasCheckedException(); String indent = hasCheckedException ? "\t" : "";
+    for (GenOperation genOperation : (genModel.isMinimalReflectiveMethods() ? genClass.getImplementedGenOperations() : genClass.getAllGenOperations())) { List<GenParameter> genParameters = genOperation.getGenParameters(); int size = genParameters.size();  boolean hasCheckedException = genOperation.hasCheckedException(); String indent = hasCheckedException ? "\t" : ""; GenOperation overrideGenOperation = genClass.getOverrideGenOperation(genOperation);
     stringBuffer.append(TEXT_1716);
-    stringBuffer.append(genClass.getQualifiedOperationID(genOperation));
+    stringBuffer.append(genClass.getQualifiedOperationID(overrideGenOperation != null ? overrideGenOperation : genOperation));
     stringBuffer.append(TEXT_1717);
     if (hasCheckedException) {
     stringBuffer.append(TEXT_1718);

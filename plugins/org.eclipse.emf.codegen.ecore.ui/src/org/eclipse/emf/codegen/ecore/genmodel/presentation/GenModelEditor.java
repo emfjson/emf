@@ -602,6 +602,10 @@ public class GenModelEditor
     genModel.setCanGenerate(true);
     validate();
 
+    if (generator != null)
+    {
+      generator.dispose();
+    }
     generator = GenModelUtil.createGenerator(genModel);
     
     updateProblemIndication = true;
@@ -1012,7 +1016,7 @@ public class GenModelEditor
    */
   public void createModel()
   {
-    URI resourceURI = EditUIUtil.getURI(getEditorInput());
+    URI resourceURI = EditUIUtil.getURI(getEditorInput(), editingDomain.getResourceSet().getURIConverter());
     Exception exception = null;
     Resource resource = null;
     try
@@ -1044,11 +1048,12 @@ public class GenModelEditor
    */
   public Diagnostic analyzeResourceProblems(Resource resource, Exception exception) 
   {
-    if (!resource.getErrors().isEmpty() || !resource.getWarnings().isEmpty())
+    boolean hasErrors = !resource.getErrors().isEmpty();
+    if (hasErrors || !resource.getWarnings().isEmpty())
     {
       BasicDiagnostic basicDiagnostic =
         new BasicDiagnostic
-          (Diagnostic.ERROR,
+          (hasErrors ? Diagnostic.ERROR : Diagnostic.WARNING,
            "org.eclipse.emf.codegen.ecore.ui",
            0,
            getString("_UI_CreateModelError_message", resource.getURI()),
@@ -1203,7 +1208,7 @@ public class GenModelEditor
    * <!-- end-user-doc -->
    * @generated
    */
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public Object getAdapter(Class key)
   {

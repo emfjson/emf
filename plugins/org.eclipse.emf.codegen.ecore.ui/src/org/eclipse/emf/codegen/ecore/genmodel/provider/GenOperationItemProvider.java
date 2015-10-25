@@ -22,13 +22,7 @@ import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.edit.provider.ComposeableAdapterFactory;
-import org.eclipse.emf.edit.provider.IEditingDomainItemProvider;
-import org.eclipse.emf.edit.provider.IItemLabelProvider;
 import org.eclipse.emf.edit.provider.IItemPropertyDescriptor;
-import org.eclipse.emf.edit.provider.IItemPropertySource;
-import org.eclipse.emf.edit.provider.IStructuredItemContentProvider;
-import org.eclipse.emf.edit.provider.ITreeItemContentProvider;
-
 import org.eclipse.emf.edit.provider.ViewerNotification;
 
 // import org.eclipse.emf.edit.provider.ItemPropertyDescriptor;
@@ -42,8 +36,6 @@ import org.eclipse.emf.edit.provider.ViewerNotification;
  */
 public class GenOperationItemProvider
   extends GenBaseItemProvider
-  implements 
-    IEditingDomainItemProvider, IStructuredItemContentProvider, ITreeItemContentProvider, IItemLabelProvider, IItemPropertySource
 {
   /**
    * This constructs an instance from a factory and a notifier.
@@ -113,6 +105,11 @@ public class GenOperationItemProvider
   {
     GenOperation genOperation = (GenOperation)object;
     EOperation eOperation = genOperation.getEcoreOperation();
+    if(eOperation == null) 
+    {
+      return "";
+    }
+    
     StringBuffer result = new StringBuffer();
     result.append(eOperation.getName());
     result.append("("); //)
@@ -130,10 +127,11 @@ public class GenOperationItemProvider
     }
     // (
     result.append(")");
-    if (eOperation.getEType() != null)
+    EClassifier eType = eOperation.getEType();
+    if (eType != null && eType.getName() != null)
     {
       result.append(" : ");
-      result.append(eOperation.getEType().getName());
+      result.append(eType.getName());
     }
 
     if (!eOperation.getEExceptions().isEmpty())

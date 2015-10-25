@@ -24,11 +24,11 @@ import org.examples.library.hr.Person;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.hr.impl.PersonImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.examples.library.hr.impl.PersonImpl#getLibrary <em>Library</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

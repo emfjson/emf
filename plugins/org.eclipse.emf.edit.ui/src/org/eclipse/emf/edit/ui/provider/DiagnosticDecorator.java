@@ -309,7 +309,14 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
       if (eObject != null)
       {
         event.doit = false;
-        setSelection(eObject);
+        if (editingDomain instanceof AdapterFactoryEditingDomain)
+        {
+          setSelection(((AdapterFactoryEditingDomain)editingDomain).getWrapper(eObject));
+        }
+        else
+        {
+          setSelection(eObject);
+        }
       }
       else
       {
@@ -679,7 +686,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
     /**
      * Creates an instance that doesn't support {@link LiveValidator live validation}.
      * Only decorations explicitly produced from {@link ValidateAction} or those 
-     * {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile) 
+     * {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile, boolean) 
      * derived from markers} are displayed.
      */
     public Styled(ResourceSet resourceSet, ExtendedPropertySheetPage propertySheetPage)
@@ -690,7 +697,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
     /**
      * Creates an instance that doesn't support {@link LiveValidator live validation}.
      * Only decorations explicitly produced from {@link ValidateAction} or those 
-     * {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile) 
+     * {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile, boolean) 
      * derived from markers} are displayed.
      */
     public Styled(ResourceSet resourceSet, StructuredViewer viewer)
@@ -868,6 +875,8 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
 
       protected int expectedSize;
 
+      private boolean isDispatching;
+
       public void dispatch(Diagnostic diagnostic)
       {
         List<Diagnostic> currentDiagnostics = null;
@@ -942,7 +951,19 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
         {
           resourceSetDiagnostic.add(diagnostic);
         }
-        handleDiagnostic(resourceSetDiagnostic);
+
+        if (!isDispatching)
+        {
+          try
+          {
+            isDispatching = true;
+            handleDiagnostic(resourceSetDiagnostic);
+          }
+          finally
+          {
+            isDispatching = false;
+          }
+        }
       }
 
       public void run()
@@ -1013,7 +1034,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
       {
         for (Resource resource : resources)
         {
-          diagnostic.add(markerHelper.getMarkerDiagnostics(resource, null));
+          diagnostic.add(markerHelper.getMarkerDiagnostics(resource, null, false));
           liveValidator.scheduleValidation(resource);
         }
       }
@@ -1030,7 +1051,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
            new Object [] { resourceSet } );
       for (Resource resource : resources)
       {
-        diagnostic.add(markerHelper.getMarkerDiagnostics(resource, null));
+        diagnostic.add(markerHelper.getMarkerDiagnostics(resource, null, false));
         liveValidator.scheduleValidation(resource);
       }
       diagnostics.clear();
@@ -1055,7 +1076,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
 
   /**
    * Creates an instance that doesn't support {@link LiveValidator live validation}.
-   * Only decorations explicitly produced from {@link ValidateAction} or those {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile) derived from markers} are displayed.
+   * Only decorations explicitly produced from {@link ValidateAction} or those {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile, boolean) derived from markers} are displayed.
    */
   public DiagnosticDecorator(ResourceSet resourceSet, StructuredViewer viewer)
   {
@@ -1096,7 +1117,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
 
   /**
    * Creates an instance that doesn't support {@link LiveValidator live validation}.
-   * Only decorations explicitly produced from {@link ValidateAction} or those {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile) derived from markers} are displayed.
+   * Only decorations explicitly produced from {@link ValidateAction} or those {@link EditUIMarkerHelper#getMarkerDiagnostics(Object, org.eclipse.core.resources.IFile, boolean) derived from markers} are displayed.
    */
   public DiagnosticDecorator(ResourceSet resourceSet, ExtendedPropertySheetPage propertySheetPage)
   {

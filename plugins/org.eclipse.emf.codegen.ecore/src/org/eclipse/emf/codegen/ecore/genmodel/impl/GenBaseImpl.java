@@ -115,10 +115,10 @@ import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenBaseImpl#getGenAnnotations <em>Gen Annotations</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
@@ -1284,6 +1284,11 @@ public abstract class GenBaseImpl extends EObjectImpl implements GenBase
 
   protected String getType(GenClass context, EClassifier eType, boolean primitiveAsObject, boolean erased)
   {
+    if (eType == null)
+    {
+      return "";
+    }
+
     if (eType instanceof EClass)
     {
       GenClass genClass = (context == null ? this : (GenBaseImpl)context).findGenClass((EClass)eType);
@@ -1302,7 +1307,8 @@ public abstract class GenBaseImpl extends EObjectImpl implements GenBase
       return getPrimitiveObjectType(eType);
     }
 
-    if ("org.eclipse.emf.common.util.Enumerator".equals(eType.getInstanceClassName()))
+    String instanceClassName = eType.getInstanceClassName();
+	if ("org.eclipse.emf.common.util.Enumerator".equals(instanceClassName))
     {
       for (EDataType baseType = getExtendedMetaData().getBaseType((EDataType)eType);
            baseType != null;
@@ -1327,7 +1333,7 @@ public abstract class GenBaseImpl extends EObjectImpl implements GenBase
     String instanceTypeName = eType.getInstanceTypeName();
     if (getEffectiveComplianceLevel().getValue() < GenJDKLevel.JDK50  || isPrimitiveType(eType) || erased && (instanceTypeName == null || !instanceTypeName.contains(".")))
     {
-      return eType.getInstanceClassName();
+      return instanceClassName == null ? "" : instanceClassName;
     }
     else
     {
@@ -3468,11 +3474,20 @@ public abstract class GenBaseImpl extends EObjectImpl implements GenBase
         }
         else
         {
-          result.append(isImported ? getImportedType(context, eClassifier, false) : getType(context, eClassifier, false));
+          result.append(isImported ? getImportedType(context, eClassifier, false, isErased) : getType(context, eClassifier, false, isErased));
         }
         if (!isErased)
         {
-          result.append(getTypeArguments(context, eGenericType.getETypeArguments(), isImported));
+          String typeArguments = getTypeArguments(context, eGenericType.getETypeArguments(), isImported);
+          int index = result.indexOf("[]");
+          if (index != -1)
+          {
+            result.insert(index, typeArguments);
+          }
+          else
+          {
+            result.append(typeArguments);
+          }
         }
       }
       else

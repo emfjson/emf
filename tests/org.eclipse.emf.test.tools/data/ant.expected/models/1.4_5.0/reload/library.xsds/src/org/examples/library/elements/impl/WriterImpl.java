@@ -4,16 +4,10 @@
 package org.examples.library.elements.impl;
 
 import java.util.Collection;
-
-
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
-
-
 import org.eclipse.emf.ecore.util.EObjectResolvingEList;
-
 import org.examples.library.elements.ElementsPackage;
 import org.examples.library.elements.Writer;
 import org.examples.library.hr.impl.PersonImpl;
@@ -24,10 +18,10 @@ import org.examples.library.hr.impl.PersonImpl;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.elements.impl.WriterImpl#getBooks <em>Books</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

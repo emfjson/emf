@@ -24,6 +24,7 @@ import org.examples.library.elements.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.elements.impl.BookImpl#getTitle <em>Title</em>}</li>
  *   <li>{@link org.examples.library.elements.impl.BookImpl#getPages <em>Pages</em>}</li>
@@ -31,7 +32,6 @@ import org.examples.library.elements.Writer;
  *   <li>{@link org.examples.library.elements.impl.BookImpl#getAuthor <em>Author</em>}</li>
  *   <li>{@link org.examples.library.elements.impl.BookImpl#getUuid <em>Uuid</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

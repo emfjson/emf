@@ -38,6 +38,7 @@ import org.eclipse.example.library.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.example.library.impl.LibraryImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.example.library.impl.LibraryImpl#getWriters <em>Writers</em>}</li>
@@ -50,7 +51,6 @@ import org.eclipse.example.library.Writer;
  *   <li>{@link org.eclipse.example.library.impl.LibraryImpl#getMap1 <em>Map1</em>}</li>
  *   <li>{@link org.eclipse.example.library.impl.LibraryImpl#getURIs_1 <em>UR Is 1</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

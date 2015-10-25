@@ -20,12 +20,7 @@ import org.eclipse.emf.common.notify.AdapterFactory;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.edit.provider.ComposeableAdapterFactory;
-import org.eclipse.emf.edit.provider.IEditingDomainItemProvider;
-import org.eclipse.emf.edit.provider.IItemLabelProvider;
 import org.eclipse.emf.edit.provider.IItemPropertyDescriptor;
-import org.eclipse.emf.edit.provider.IItemPropertySource;
-import org.eclipse.emf.edit.provider.IStructuredItemContentProvider;
-import org.eclipse.emf.edit.provider.ITreeItemContentProvider;
 import org.eclipse.emf.edit.provider.ItemPropertyDescriptor;
 import org.eclipse.emf.edit.provider.ViewerNotification;
 
@@ -36,13 +31,7 @@ import org.eclipse.emf.edit.provider.ViewerNotification;
  * @generated
  */
 public class GenAnnotationItemProvider
-  extends GenBaseItemProvider
-  implements	
-    IEditingDomainItemProvider,	
-    IStructuredItemContentProvider,	
-    ITreeItemContentProvider,	
-    IItemLabelProvider,	
-    IItemPropertySource		
+  extends GenBaseItemProvider		
 {
   /**
    * This constructs an instance from a factory and a notifier.
@@ -177,16 +166,17 @@ public class GenAnnotationItemProvider
   {
     GenAnnotation genAnnotation = (GenAnnotation)object;
     StringBuffer result = new StringBuffer();
-    if (genAnnotation.getSource() != null)
+    String source = genAnnotation.getSource();
+    if (source != null)
     {
-      int index = genAnnotation.getSource().lastIndexOf("/");
+      int index = source.lastIndexOf("/");
       if (index == -1)
       {
-        result.append(genAnnotation.getSource());
+        result.append(source);
       }
       else
       {
-        result.append(genAnnotation.getSource().substring(index + 1));
+        result.append(source.substring(index + 1));
       }
     }
     return result.toString();

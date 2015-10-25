@@ -34,13 +34,13 @@ import org.examples.library.hr.Person;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getWriters <em>Writers</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getBooks <em>Books</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getEmployees <em>Employees</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

@@ -24,11 +24,11 @@ import org.eclipse.example.library.LibraryPackage;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.example.library.impl.EStringToBookMapEntryImpl#getTypedKey <em>Key</em>}</li>
  *   <li>{@link org.eclipse.example.library.impl.EStringToBookMapEntryImpl#getTypedValue <em>Value</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */

@@ -18,14 +18,10 @@ import org.eclipse.emf.codegen.ecore.genmodel.GenEnum;
 import org.eclipse.emf.codegen.ecore.genmodel.GenModelPackage;
 import org.eclipse.emf.common.notify.AdapterFactory;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.edit.provider.ComposeableAdapterFactory;
-import org.eclipse.emf.edit.provider.IEditingDomainItemProvider;
-import org.eclipse.emf.edit.provider.IItemLabelProvider;
 import org.eclipse.emf.edit.provider.IItemPropertyDescriptor;
-import org.eclipse.emf.edit.provider.IItemPropertySource;
-import org.eclipse.emf.edit.provider.IStructuredItemContentProvider;
-import org.eclipse.emf.edit.provider.ITreeItemContentProvider;
 import org.eclipse.emf.edit.provider.ItemPropertyDescriptor;
 
 import org.eclipse.emf.edit.provider.ViewerNotification;
@@ -39,8 +35,6 @@ import org.eclipse.emf.edit.provider.ViewerNotification;
  */
 public class GenEnumItemProvider
   extends GenDataTypeItemProvider
-  implements 
-    IEditingDomainItemProvider, IStructuredItemContentProvider, ITreeItemContentProvider, IItemLabelProvider, IItemPropertySource
 {
   /**
    * This constructs an instance from a factory and a notifier.
@@ -166,7 +160,8 @@ public class GenEnumItemProvider
   public String getText(Object object)
   {
     GenEnum genEnum = (GenEnum)object;
-    return genEnum.getEcoreEnum().getName();
+    EEnum ecoreEnum = genEnum.getEcoreEnum();
+    return ecoreEnum == null || ecoreEnum.getName() == null ? "" : ecoreEnum.getName();
   }
 
   /**

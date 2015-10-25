@@ -168,7 +168,6 @@ public class XcoreEcoreBuilder
       int index = name.lastIndexOf(".");
       if (index == -1)
       {
-        basePackage = null;
         ePackage.setName(name);
       }
       else
@@ -372,7 +371,8 @@ public class XcoreEcoreBuilder
                 // Be more careful about exceptions.
                 // TODO
                 //
-                eModelElement.eSet(eStructuralFeature, value);
+                EDataType eDataType = (EDataType)eStructuralFeature.getEType();
+                eModelElement.eSet(eStructuralFeature, EcoreUtil.createFromString(eDataType, value));
                 continue;
               }
             }

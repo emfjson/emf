@@ -39,11 +39,11 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenParameterImpl#getGenOperation <em>Gen Operation</em>}</li>
  *   <li>{@link org.eclipse.emf.codegen.ecore.genmodel.impl.GenParameterImpl#getEcoreParameter <em>Ecore Parameter</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
@@ -310,7 +310,8 @@ public class GenParameterImpl extends GenTypedElementImpl implements GenParamete
   @Override
   public String getName()
   {
-    return safeName(getEcoreParameter().getName());
+    EParameter ecoreParameter = getEcoreParameter();
+    return ecoreParameter == null || ecoreParameter.getName() == null ? "" : safeName(ecoreParameter.getName());
   }
 
   public GenPackage getGenPackage()

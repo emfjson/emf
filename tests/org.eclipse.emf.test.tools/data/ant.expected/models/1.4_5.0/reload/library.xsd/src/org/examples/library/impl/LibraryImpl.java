@@ -30,13 +30,13 @@ import org.examples.library.Writer;
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
+ * </p>
  * <ul>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getSite <em>Site</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getWriters <em>Writers</em>}</li>
  *   <li>{@link org.examples.library.impl.LibraryImpl#getBooks <em>Books</em>}</li>
  * </ul>
- * </p>
  *
  * @generated
  */
