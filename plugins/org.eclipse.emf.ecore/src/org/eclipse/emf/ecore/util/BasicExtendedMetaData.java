@@ -1312,7 +1312,12 @@ public class BasicExtendedMetaData implements ExtendedMetaData
         int fragmentIndex = qualifiedName.lastIndexOf('#');
         if (fragmentIndex == -1)
         {
-          return getElement(getNamespace(eStructuralFeature.getEContainingClass().getEPackage()), qualifiedName);
+          EPackage ePackage = eStructuralFeature.getEContainingClass().getEPackage();
+          EClass documentRoot = getDocumentRoot(ePackage);
+          if (documentRoot != null)
+          {
+            return getLocalElement(documentRoot, getNamespace(ePackage), qualifiedName);
+          }
         }
         else if (fragmentIndex == 0)
         {
@@ -2197,9 +2202,9 @@ public class BasicExtendedMetaData implements ExtendedMetaData
               }
             }
           }
-          result = nameToClassifierMap.get(name);
           this.nameToClassifierMap = nameToClassifierMap;
         }
+        result = nameToClassifierMap.get(name);
       }
 
       return result;

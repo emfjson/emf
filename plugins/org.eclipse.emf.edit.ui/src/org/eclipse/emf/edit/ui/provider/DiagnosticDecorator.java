@@ -563,16 +563,10 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
                      EMFEditUIPlugin.INSTANCE.getString("_UI_DiagnosisOfNObjects_message", new String[] { "1" }),
                      new Object [] { resource } );
 
-                synchronized (resource)
+                for (EObject eObject : resource.getContents())
                 {
-                  synchronized (resourceSet)
-                  {
-                    for (EObject eObject : resource.getContents())
-                    {
-                      diagnostician.validate(eObject, resourceDiagnostic, context);
-                      context.remove(EObjectValidator.ROOT_OBJECT);
-                    }
-                  }
+                  diagnostician.validate(eObject, resourceDiagnostic, context);
+                  context.remove(EObjectValidator.ROOT_OBJECT);
                 }
 
                 for (Resource.Diagnostic warning : resource.getWarnings())
@@ -1357,7 +1351,7 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
                  {
                    if (!control.isDisposed())
                    {
-                     propertySheetPage.refresh();
+                     propertySheetPage.refreshLabels();
                    }
                  }
                });
@@ -1641,9 +1635,9 @@ public class DiagnosticDecorator extends CellLabelProvider implements ILabelDeco
           Image image = labelProvider.getImage(data);
           result.append("<img src='");
           result.append(ImageURIRegistry.INSTANCE.getImageURI(image));
-          result.append("'/> <a href='");
+          result.append("'/> <a href=\"");
           result.append(EcoreUtil.getURI((EObject)data));
-          result.append("'>");
+          result.append("\">");
           result.append(text);
           result.append("</a></div>\n");
         }
