@@ -31,7 +31,6 @@ import org.eclipse.emf.ecore.xcore.XPackage;
 import org.eclipse.emf.ecore.xcore.XParameter;
 import org.eclipse.emf.ecore.xcore.XStructuralFeature;
 import org.eclipse.emf.ecore.xcore.XTypeParameter;
-import org.eclipse.emf.ecore.xcore.XcoreInjectorProvider;
 import org.eclipse.emf.ecore.xcore.mappings.ToXcoreMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XClassMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XFeatureMapping;
@@ -40,6 +39,7 @@ import org.eclipse.emf.ecore.xcore.mappings.XPackageMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XParameterMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XTypeParameterMapping;
 import org.eclipse.emf.ecore.xcore.mappings.XcoreMapper;
+import org.eclipse.emf.test.ecore.xcore.XcoreStandaloneInjectorProvider;
 import org.eclipse.xtend2.lib.StringConcatenation;
 import org.eclipse.xtext.junit4.InjectWith;
 import org.eclipse.xtext.junit4.XtextRunner;
@@ -51,7 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(XtextRunner.class)
-@InjectWith(XcoreInjectorProvider.class)
+@InjectWith(XcoreStandaloneInjectorProvider.class)
 @SuppressWarnings("all")
 public class XcoreMapperTest {
   @Inject
@@ -141,29 +141,27 @@ public class XcoreMapperTest {
           EList<XMember> _members = clazz.getMembers();
           for (final XMember member : _members) {
             boolean _matched = false;
-            if (!_matched) {
-              if (member instanceof XStructuralFeature) {
-                _matched=true;
-                XFeatureMapping _mapping_10 = this.mapper.getMapping(((XStructuralFeature)member));
-                EStructuralFeature _eStructuralFeature = _mapping_10.getEStructuralFeature();
-                Assert.assertNotNull(_eStructuralFeature);
-                XFeatureMapping _mapping_11 = this.mapper.getMapping(((XStructuralFeature)member));
-                EStructuralFeature _eStructuralFeature_1 = _mapping_11.getEStructuralFeature();
-                XFeatureMapping _mapping_12 = this.mapper.getMapping(((XStructuralFeature)member));
-                GenFeature _genFeature = _mapping_12.getGenFeature();
-                EStructuralFeature _ecoreFeature = _genFeature.getEcoreFeature();
-                Assert.assertEquals(_eStructuralFeature_1, _ecoreFeature);
-                XFeatureMapping _mapping_13 = this.mapper.getMapping(((XStructuralFeature)member));
-                EStructuralFeature _eStructuralFeature_2 = _mapping_13.getEStructuralFeature();
-                ToXcoreMapping _toXcoreMapping_4 = this.mapper.getToXcoreMapping(_eStructuralFeature_2);
-                XNamedElement _xcoreElement_4 = _toXcoreMapping_4.getXcoreElement();
-                Assert.assertEquals(member, _xcoreElement_4);
-                XFeatureMapping _mapping_14 = this.mapper.getMapping(((XStructuralFeature)member));
-                GenFeature _genFeature_1 = _mapping_14.getGenFeature();
-                ToXcoreMapping _toXcoreMapping_5 = this.mapper.getToXcoreMapping(_genFeature_1);
-                XNamedElement _xcoreElement_5 = _toXcoreMapping_5.getXcoreElement();
-                Assert.assertEquals(member, _xcoreElement_5);
-              }
+            if (member instanceof XStructuralFeature) {
+              _matched=true;
+              XFeatureMapping _mapping_10 = this.mapper.getMapping(((XStructuralFeature)member));
+              EStructuralFeature _eStructuralFeature = _mapping_10.getEStructuralFeature();
+              Assert.assertNotNull(_eStructuralFeature);
+              XFeatureMapping _mapping_11 = this.mapper.getMapping(((XStructuralFeature)member));
+              EStructuralFeature _eStructuralFeature_1 = _mapping_11.getEStructuralFeature();
+              XFeatureMapping _mapping_12 = this.mapper.getMapping(((XStructuralFeature)member));
+              GenFeature _genFeature = _mapping_12.getGenFeature();
+              EStructuralFeature _ecoreFeature = _genFeature.getEcoreFeature();
+              Assert.assertEquals(_eStructuralFeature_1, _ecoreFeature);
+              XFeatureMapping _mapping_13 = this.mapper.getMapping(((XStructuralFeature)member));
+              EStructuralFeature _eStructuralFeature_2 = _mapping_13.getEStructuralFeature();
+              ToXcoreMapping _toXcoreMapping_4 = this.mapper.getToXcoreMapping(_eStructuralFeature_2);
+              XNamedElement _xcoreElement_4 = _toXcoreMapping_4.getXcoreElement();
+              Assert.assertEquals(member, _xcoreElement_4);
+              XFeatureMapping _mapping_14 = this.mapper.getMapping(((XStructuralFeature)member));
+              GenFeature _genFeature_1 = _mapping_14.getGenFeature();
+              ToXcoreMapping _toXcoreMapping_5 = this.mapper.getToXcoreMapping(_genFeature_1);
+              XNamedElement _xcoreElement_5 = _toXcoreMapping_5.getXcoreElement();
+              Assert.assertEquals(member, _xcoreElement_5);
             }
             if (!_matched) {
               if (member instanceof XOperation) {
